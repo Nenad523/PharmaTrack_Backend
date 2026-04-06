@@ -137,6 +137,12 @@ export class MedicationRepository {
     }
 
     getAlternatives(id: number){
-        return {id};
+        
+        try {
+            return;
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške.');
+        }
     }
 }

@@ -5,7 +5,7 @@
 
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus} from "@nestjs/common";
 
-@Catch() // ← hvata SVE greške, bez argumenta znači sve tipove
+@Catch() // ← hvata SVE greške
 export class GlobalExceptionFilter implements ExceptionFilter {
 
   catch(exception: unknown, host: ArgumentsHost) {
@@ -39,7 +39,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       }
     }
 
-    // Pošalji JSON odgovor klijentu
+    // JSON odgovor klijentu
     response.status(status).json({
       success: false,
       error: {
