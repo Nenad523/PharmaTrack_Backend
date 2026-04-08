@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable prettier/prettier */
+
 import { HttpException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { MedicationDto } from './dto/medication-dto';
 import { DatabaseService } from 'src/database/database.service';
@@ -136,10 +137,39 @@ export class MedicationRepository {
         }
     }
 
-    getAlternatives(id: number){
+    async getAlternatives(id: number){
         
         try {
-            return;
+            
+            const rows = await this.db.query<MedicationCard[]>(
+                                   `SELECT DISTINCT
+                                    M.id,
+                                    M.name,
+                                    M.description,
+                                    M.img_url,
+                                    M.isActive
+                                    FROM Medication M
+                                    LEFT JOIN Medication_ActiveIngredient MAI
+                                        ON M.id = MAI.medication_id
+                                    WHERE M.id <> ? AND MAI.activeIngredient_id IN (
+                                        SELECT MAI1.activeIngredient_id from Medication_ActiveIngredient MAI1
+                                        WHERE MAI1.medication_id = ?)`,
+                                    [id, id]
+            );
+
+            if (rows.length === 0){
+                return {
+                         data: [],
+                         message: `Lijek sa ID-em ${id} nema alternativnih lijekova.`
+                }
+            }
+
+            return {
+                success: true,
+                data: rows,
+                count: rows.length
+            }
+
         } catch (error) {
             if (error instanceof HttpException) throw error;
             throw new InternalServerErrorException('Došlo je do greške.');
