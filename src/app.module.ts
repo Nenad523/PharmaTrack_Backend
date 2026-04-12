@@ -7,6 +7,7 @@ import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
 import { ConfigModule } from '@nestjs/config';
 import { MedicationModule } from './medication/medication.module';
+import { AuthenticationModule } from './authentication/authentication.module';
 
 @Module({
   imports: [
@@ -14,7 +15,8 @@ import { MedicationModule } from './medication/medication.module';
         isGlobal: true,
     }),
     DatabaseModule,
-    MedicationModule],
+    MedicationModule,
+    AuthenticationModule],
   controllers: [AppController],
   providers: [AppService],
 })
