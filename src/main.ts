@@ -15,8 +15,11 @@ const config = new DocumentBuilder()
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const allowedOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
+    : ['http://localhost:3000', 'http://127.0.0.1:3000'];
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+    origin: allowedOrigins,
     credentials: true,
   });
   app.useGlobalPipes(
@@ -30,7 +33,7 @@ async function bootstrap() {
 
   app.use(
     session({
-      secret: 'super-secret',
+      secret: process.env.SESSION_SECRET ?? 'super-secret',
       resave: false,
       saveUninitialized: false,
       cookie: {
