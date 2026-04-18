@@ -47,7 +47,7 @@ export class AuthenticationController {
     async register(@Body() body: RegisterDto) {
         const { email, password, fullName } = body;
 
-        await this.authService.register(email, password, fullName);
+        return this.authService.register(email, password, fullName);
     }
 
     @Get('/verify-email')

@@ -3,8 +3,16 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
 import { User } from './types/User';
-import { RegisterDto } from './dto/register.dto';
 import { ResultSetHeader } from 'mysql2/promise';
+
+type CreateUserInput = {
+    fullName: string;
+    email: string;
+    password: string;
+    verificationToken: string;
+    verificationTokenExpiry: Date;
+};
+
 @Injectable()
 export class RepositoryService {
 
@@ -27,7 +35,7 @@ export class RepositoryService {
     async findByToken(verificationToken: string){
         const users = await this.db.query<any[]>(
             'SELECT * from Users WHERE verificationToken = ? \
-             AND verificationTokenExpiry > NOW()?', [verificationToken]
+             AND verificationTokenExpiry > NOW()', [verificationToken]
         );
 
         return users;
@@ -47,7 +55,7 @@ export class RepositoryService {
         }
     }
 
-    async create({fullName, email, password, verificationToken, verificationTokenExpiry}: RegisterDto){
+    async create({fullName, email, password, verificationToken, verificationTokenExpiry}: CreateUserInput){
         const result = await this.db.query<ResultSetHeader>(
             'INSERT INTO Users \
             (fullName, email, passwordHash, role, verificationToken, verificationTokenExpiry) VALUES (?, ?, ?, ?, ?, ?)',
