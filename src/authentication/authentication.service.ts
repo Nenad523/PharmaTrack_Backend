@@ -1,6 +1,11 @@
+/* eslint-disable @typescript-eslint/no-floating-promises */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable prettier/prettier */
 
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { RepositoryService } from './repository.service';
 import * as bcrypt from 'bcrypt';
 import { EmailService } from './email.service';
@@ -30,6 +35,17 @@ export class AuthenticationService {
             role: user.role,
             pharmacy_id: user.pharmacy_id,
         };
+    }
+
+    async verifyEmail(token: string){
+
+        const users = await this.rep.findByToken(token);
+        if (users.length === 0){
+            throw new BadRequestException('Token nije validan ili je istekao.');
+        }
+
+        await this.rep.updateToken(token);
+        return { message : 'Email uspješno verifikovan. Možete se prijaviti.'};
     }
 
     async register(email: string, password: string, fullName: string){
