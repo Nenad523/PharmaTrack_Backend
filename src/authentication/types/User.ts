@@ -7,4 +7,5 @@ export type User = {
     passwordHash: string
     role: string | null
     pharmacy_id: string | null
+    isVerified: number
 }

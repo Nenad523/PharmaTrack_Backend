@@ -5,7 +5,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable prettier/prettier */
 
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, UnauthorizedException, Injectable } from '@nestjs/common';
 import { RepositoryService } from './repository.service';
 import * as bcrypt from 'bcrypt';
 import { EmailService } from './email.service';
@@ -20,12 +20,18 @@ export class AuthenticationService {
         
         const user = await this.rep.findByEmail(email);
         if (!user){
-            return null;
+            throw new UnauthorizedException('Email nije validan.');
+        }
+
+        if (!user.isVerified){
+            throw new UnauthorizedException(
+                'Email adresa nije verifikovana. Provjerite inbox.');
         }
 
         const isMatch = await bcrypt.compare(password, user.passwordHash);
         if (!isMatch){
-            return null;
+            throw new UnauthorizedException(
+                'Email adresa ili lozinka nije validna.');
         }
 
         return {
