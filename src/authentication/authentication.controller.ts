@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/require-await */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable prettier/prettier */
-import { Controller, Post, Request, UseGuards, Get, Body } from '@nestjs/common';
+import { Controller, Post, Request, UseGuards, Get, Body, Query } from '@nestjs/common';
 import { AuthenticationService } from './authentication.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -45,12 +47,11 @@ export class AuthenticationController {
     async register(@Body() body: RegisterDto) {
         const { email, password, fullName } = body;
 
-        const user = await this.authService.register(email, password, fullName);
+        await this.authService.register(email, password, fullName);
+    }
 
-        return {
-            id: user.id,
-            email: user.email,
-            fullName: user.fullName,
-        };
+    @Get('/verify-email')
+    async verifyEmail(@Query('token') token: string){
+        return this.authService.verifyEmail(token);
     }
 }
