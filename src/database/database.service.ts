@@ -13,8 +13,9 @@ export class DatabaseService {
     constructor(private config: ConfigService){
         this.pool = mysql.createPool({
             host: this.config.get('DB_HOST'),
-            user: this.config.get('DB_USER'),
-            password: this.config.get('DB_PSW'),
+            port: parseInt(this.config.get('DB_PORT') ?? '3306', 10),
+            user: this.config.get('DB_USERNAME'),
+            password: this.config.get('DB_PASSWORD'),
             database: this.config.get('DB_NAME')
         }) 
     }
