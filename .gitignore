@@ -3,7 +3,7 @@
 /node_modules
 .prettierrc
 eslint*
-nest*
-packa*
+#nest*
+#packa*
 README.md
-tscon*
+#tscon*
