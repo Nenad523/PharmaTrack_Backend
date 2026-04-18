@@ -23,10 +23,11 @@ export class RepositoryService {
         return users[0] ?? null;
     }
 
-    async create({fullName, email, password}: RegisterDto){
+    async create({fullName, email, password, verificationToken, verificationTokenExpiry}: RegisterDto){
         const result = await this.db.query<ResultSetHeader>(
-            'INSERT INTO Users (fullName, email, passwordHash, role) VALUES (?, ?, ?, ?)',
-            [fullName, email, password, 'user']
+            'INSERT INTO Users \
+            (fullName, email, passwordHash, role, verificationToken, verificationTokenExpiry) VALUES (?, ?, ?, ?)',
+            [fullName, email, password, 'user', verificationToken, verificationTokenExpiry]
         );
 
         if (result.affectedRows === 0) {

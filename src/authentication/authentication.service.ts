@@ -3,11 +3,13 @@
 import { Injectable } from '@nestjs/common';
 import { RepositoryService } from './repository.service';
 import * as bcrypt from 'bcrypt';
+import { EmailService } from './email.service';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class AuthenticationService {
 
-    constructor(private rep: RepositoryService){}
+    constructor(private rep: RepositoryService, private emailService: EmailService){}
 
     async validateUser(email: string, password: string){
         
@@ -39,13 +41,19 @@ export class AuthenticationService {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const user = await this.rep.create({
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+        const verificationTokenExpiry = new Date(Date.now() + 24*60*60*1000);
+
+        await this.rep.create({
             fullName,
             email,
-            password: hashedPassword
+            password: hashedPassword,
+            verificationToken,
+            verificationTokenExpiry
         });
 
-        return user;
+        this.emailService.sendVerificationEmail(email, verificationToken);
+        return { message : 'Registracija uspješna. Provjerite email za verifikaciju.'};
     }
     
 }
