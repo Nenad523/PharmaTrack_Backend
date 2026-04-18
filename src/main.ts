@@ -4,7 +4,8 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filters';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-
+import session from 'express-session';
+import passport from 'passport';
 
 const config = new DocumentBuilder()
   .setTitle('Workout API')
@@ -26,6 +27,22 @@ async function bootstrap() {
       validateCustomDecorators: true
     }),
   );
+
+  app.use(
+    session({
+      secret: 'super-secret',
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        httpOnly: true,
+        secure: false,
+      },
+    }),
+  );
+
+  app.use(passport.initialize());
+  app.use(passport.session());
+  
   app.useGlobalFilters(new GlobalExceptionFilter())
   
   const document = SwaggerModule.createDocument(app, config);
