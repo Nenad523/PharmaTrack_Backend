@@ -58,7 +58,7 @@ export class AuthenticationService {
         
         const existingUser = await this.rep.findByEmail(email);
         if (existingUser){
-            throw new Error('User already exists');
+            throw new BadRequestException('Korisnik sa ovom email adresom već postoji.');
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
