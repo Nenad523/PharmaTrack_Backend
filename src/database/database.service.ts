@@ -2,12 +2,12 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable prettier/prettier */
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import * as mysql from 'mysql2/promise';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
-export class DatabaseService {
+export class DatabaseService implements OnModuleDestroy {
     private pool;
 
     constructor(private config: ConfigService){
@@ -18,6 +18,10 @@ export class DatabaseService {
             password: this.config.get('DB_PASSWORD'),
             database: this.config.get('DB_NAME')
         }) 
+    }
+
+    async onModuleDestroy() {
+        await this.pool.end();
     }
 
     async query<T>(sql: string, params?: any[]): Promise<T> {
