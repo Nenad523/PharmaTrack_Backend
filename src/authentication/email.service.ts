@@ -6,11 +6,14 @@ import * as nodemailer from 'nodemailer'
 export class EmailService {
     
   private transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS  // App password, ne obična lozinka
-    }
+      service: 'smtp.gmail.com',
+      port: 587,        // explicit is better
+      secure: false,
+      requireTLS: true,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS  // App password, ne obična lozinka
+      }
   })
 
   async sendVerificationEmail(email: string, token: string) {
