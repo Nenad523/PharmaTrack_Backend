@@ -6,7 +6,7 @@ import * as nodemailer from 'nodemailer'
 export class EmailService {
     
   private transporter = nodemailer.createTransport({
-      service: 'smtp.gmail.com',
+      service: 'gmail',
       port: 587,        // explicit is better
       secure: false,
       requireTLS: true,
