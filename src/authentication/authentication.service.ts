@@ -74,7 +74,7 @@ export class AuthenticationService {
             verificationTokenExpiry
         });
 
-        this.emailService.sendVerificationEmail(email, verificationToken);
+        await this.emailService.sendVerificationEmail(email, verificationToken);
         return { message : 'Registracija uspješna. Provjerite email za verifikaciju.'};
     }
     
