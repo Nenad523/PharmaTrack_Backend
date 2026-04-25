@@ -8,6 +8,7 @@ import { DatabaseModule } from './database/database.module';
 import { ConfigModule } from '@nestjs/config';
 import { MedicationModule } from './medication/medication.module';
 import { AuthenticationModule } from './authentication/authentication.module';
+import { PharmaciesModule } from './pharmacies/pharmacies.module';
 
 @Module({
   imports: [
@@ -16,7 +17,8 @@ import { AuthenticationModule } from './authentication/authentication.module';
     }),
     DatabaseModule,
     MedicationModule,
-    AuthenticationModule],
+    AuthenticationModule,
+    PharmaciesModule],
   controllers: [AppController],
   providers: [AppService],
 })
