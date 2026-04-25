@@ -9,5 +9,6 @@ export class PharmaciesService {
 
     async searchPharmacies(searchDto: SearchDto){
         const response = await this.repo.searchPharmacies(searchDto);
+        return response;
     }
 }

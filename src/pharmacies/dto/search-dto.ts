@@ -9,7 +9,8 @@ import {
     IsString,
     IsBoolean,
     IsArray,
-    IsIn
+    IsIn,
+    ArrayNotEmpty
 } from "class-validator";
 
 import {
@@ -22,21 +23,24 @@ export class SearchDto {
     @Transform(({ value }) => Array.isArray(value) ? value : [value])
     @Type(() => Number)
     @IsArray()
+    @ArrayNotEmpty()
     @IsInt({ each: true })
     @Min(0, { each: true })
     doseIds!: number[];
 
+    @IsOptional()
     @Type(() => Number)
     @IsNumber()
     @Min(-90)
     @Max(90)
-    uLat!: number; // x kooridnata korisnika koja se koristi pri soritanju rezultata
+    uLat?: number; // x kooridnata korisnika koja se koristi pri soritanju rezultata
     
+    @IsOptional()
     @Type(() => Number)
     @IsNumber()
     @Min(-180)
     @Max(180)
-    uLng!: number; // y kooridnata korisnika koja se koristi pri soritanju rezultata
+    uLng?: number; // y kooridnata korisnika koja se koristi pri soritanju rezultata
 
     @IsOptional()
     @IsIn(['az', 'distance'])
@@ -45,7 +49,7 @@ export class SearchDto {
     @IsOptional()
     @Transform(({value}) => value === 'true' || value === true)
     @IsBoolean()
-    active?: boolean; // filter samo aktivnih apoteka
+    openNow?: boolean; // filter samo aktivnih apoteka
     
     @IsOptional()
     @Transform(({value}) => value === 'true' || value === true)

@@ -1,5 +1,5 @@
 import { HttpException, Injectable, InternalServerErrorException } from '@nestjs/common';
-import { DatabaseService } from 'src/database/database.service';
+import { DatabaseService } from '../database/database.service';
 import { SearchDto } from './dto/search-dto';
 import {
     MainSearch,
@@ -20,7 +20,6 @@ export class RepositoryService {
                 uLat,
                 uLng,
                 sort,
-                active,
                 city,
                 radius,
                 name,
@@ -168,6 +167,7 @@ export class RepositoryService {
                 count: data.length,
             };
         } catch (error) {
+            console.error('Pharmacy search failed:', error);
             if (error instanceof HttpException) throw error;
             throw new InternalServerErrorException('Došlo je do greške.');
         }
