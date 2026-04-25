@@ -4,7 +4,7 @@ export type SearchDose = {
     doseId: number;
     strength: string;
     lastUpdated?: string;
-}
+};
 
 export type MainSearch = {
     id: number;
@@ -19,7 +19,7 @@ export type MainSearch = {
     openUntil: string | null;
     availabilitySource: AvailabilitySource;
     doses: SearchDose[];
-}
+};
 
 export type PharmacySearchRow = {
     id: number;
@@ -29,7 +29,7 @@ export type PharmacySearchRow = {
     latitude: number;
     longitude: number;
     distance?: number | null;
-}
+};
 
 export type PharmacyAvailabilityRow = {
     pharmacyId: number;
@@ -37,11 +37,11 @@ export type PharmacyAvailabilityRow = {
     hasClosedExceptionToday: boolean;
     activeExceptionClose: string | null;
     workingHoursClose: string | null;
-}
+};
 
 export type PharmacyDoseRow = {
     pharmacyId: number;
     doseId: number;
     strength: string;
     lastUpdated?: string;
-}
+};
