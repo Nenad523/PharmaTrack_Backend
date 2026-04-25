@@ -29,10 +29,14 @@ export type PharmacySearchRow = {
     latitude: number;
     longitude: number;
     distance?: number | null;
-    isOpenNow: boolean;
-    isOnDuty: boolean;
-    openUntil: string | null;
-    availabilitySource: AvailabilitySource;
+}
+
+export type PharmacyAvailabilityRow = {
+    pharmacyId: number;
+    dutyEnd: string | null;
+    hasClosedExceptionToday: boolean;
+    activeExceptionClose: string | null;
+    workingHoursClose: string | null;
 }
 
 export type PharmacyDoseRow = {

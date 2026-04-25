@@ -7,7 +7,9 @@ import {
 import { DatabaseService } from '../database/database.service';
 import { SearchDto } from './dto/search-dto';
 import {
+    AvailabilitySource,
     MainSearch,
+    PharmacyAvailabilityRow,
     PharmacyDoseRow,
     PharmacySearchRow,
     SearchDose,
@@ -29,6 +31,8 @@ export class PharmaciesRepository {
                 radius,
                 name,
                 address,
+                openNow,
+                onDuty,
             } = searchDto;
 
             const dosePlaceholders = doseIds.map(() => '?').join(', ');
@@ -142,7 +146,61 @@ export class PharmaciesRepository {
             const pharmacyIds = pharmacyRows.map((pharmacy) => pharmacy.id);
             const pharmacyIdPlaceholders = pharmacyIds.map(() => '?').join(', ');
 
-            // Query 2: za nadjene apoteke ucitavamo samo trazene doze koje imaju na stanju.
+            // Query 2: za nadjene apoteke nalazimo njihove availability cinjenice
+
+            const availabilityRows = await this.db.query<PharmacyAvailabilityRow[]>(
+                `
+                    SELECT
+                        P.id AS pharmacyId,
+
+                        (
+                            SELECT MIN(DS.end_datetime)
+                            FROM DutySchedule DS
+                            WHERE DS.pharmacy_id = P.id
+                              AND NOW() BETWEEN DS.start_datetime AND DS.end_datetime
+                        ) AS dutyEnd,
+
+                        EXISTS (
+                            SELECT 1
+                            FROM PharmacyScheduleException PSE
+                            WHERE PSE.pharmacy_id = P.id
+                              AND PSE.exception_date = CURDATE()
+                              AND PSE.is_closed = 1
+                        ) AS hasClosedExceptionToday,
+
+                        (
+                            SELECT MIN(PSE.close_time)
+                            FROM PharmacyScheduleException PSE
+                            WHERE PSE.pharmacy_id = P.id
+                              AND PSE.exception_date = CURDATE()
+                              AND PSE.is_closed = 0
+                              AND CURTIME() BETWEEN PSE.open_time AND PSE.close_time
+                        ) AS activeExceptionClose,
+
+                        (
+                            SELECT MIN(WH.close_time)
+                            FROM WorkingHours WH
+                            WHERE WH.pharmacy_id = P.id
+                              AND WH.day_of_week = ELT(
+                                  WEEKDAY(CURDATE()) + 1,
+                                  'Monday',
+                                  'Tuesday',
+                                  'Wednesday',
+                                  'Thursday',
+                                  'Friday',
+                                  'Saturday',
+                                  'Sunday'
+                              )
+                              AND CURTIME() BETWEEN WH.open_time AND WH.close_time
+                        ) AS workingHoursClose
+
+                    FROM Pharmacy P
+                    WHERE P.id IN (${pharmacyIdPlaceholders})
+                `,
+                pharmacyIds,
+            );
+
+            // Query 3: za nadjene apoteke ucitavamo samo trazene doze koje imaju na stanju.
             const doseRows = await this.db.query<PharmacyDoseRow[]>(
                 `
                     SELECT
@@ -175,10 +233,59 @@ export class PharmaciesRepository {
                 });
             }
 
-            const data: MainSearch[] = pharmacyRows.map((pharmacy) => ({
-                ...pharmacy,
-                doses: dosesByPharmacy.get(pharmacy.id) ?? [],
-            }));
+            const availabilityByPharmacy = new Map<number, PharmacyAvailabilityRow>();
+
+            for (const row of availabilityRows) {
+                availabilityByPharmacy.set(row.pharmacyId, row);
+            }
+
+            let data: MainSearch[] = pharmacyRows.map((pharmacy) => {
+                const availability = availabilityByPharmacy.get(pharmacy.id);
+                const dutyEnd = availability?.dutyEnd ?? null;
+                const activeExceptionClose = availability?.activeExceptionClose ?? null;
+                const workingHoursClose = availability?.workingHoursClose ?? null;
+                const isOnDuty = dutyEnd !== null;
+
+                let isOpenNow = false;
+                let openUntil: string | null = null;
+                let availabilitySource: AvailabilitySource = null;
+
+                if (isOnDuty) {
+                    isOpenNow = true;
+                    openUntil = dutyEnd;
+                    availabilitySource = 'duty';
+                } else if (
+                    Boolean(availability?.hasClosedExceptionToday) &&
+                    activeExceptionClose === null
+                ) {
+                    isOpenNow = false;
+                } else if (activeExceptionClose !== null) {
+                    isOpenNow = true;
+                    openUntil = activeExceptionClose;
+                    availabilitySource = 'exception';
+                } else if (workingHoursClose !== null) {
+                    isOpenNow = true;
+                    openUntil = workingHoursClose;
+                    availabilitySource = 'working_hours';
+                }
+
+                return {
+                    ...pharmacy,
+                    isOpenNow,
+                    isOnDuty,
+                    openUntil,
+                    availabilitySource,
+                    doses: dosesByPharmacy.get(pharmacy.id) ?? [],
+                };
+            });
+
+            if (openNow === true) {
+                data = data.filter((pharmacy) => pharmacy.isOpenNow);
+            }
+
+            if (onDuty === true) {
+                data = data.filter((pharmacy) => pharmacy.isOnDuty);
+            }
 
             return {
                 success: true,
