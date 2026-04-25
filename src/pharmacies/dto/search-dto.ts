@@ -6,11 +6,13 @@ import {
     IsNumber,
     Max,
     IsOptional,
+    IsDefined,
     IsString,
     IsBoolean,
     IsArray,
     IsIn,
-    ArrayNotEmpty
+    ArrayNotEmpty,
+    ValidateIf
 } from "class-validator";
 
 import {
@@ -28,14 +30,26 @@ export class SearchDto {
     @Min(0, { each: true })
     doseIds!: number[];
 
-    @IsOptional()
+    @ValidateIf((o) =>
+        o.uLat !== undefined ||
+        o.uLng !== undefined ||
+        o.radius !== undefined ||
+        o.sort === 'distance',
+    )
+    @IsDefined({ message: 'uLat je obavezan kada koristis radius, sort=distance ili uLng.' })
     @Type(() => Number)
     @IsNumber()
     @Min(-90)
     @Max(90)
     uLat?: number; // x kooridnata korisnika koja se koristi pri soritanju rezultata
     
-    @IsOptional()
+    @ValidateIf((o) =>
+        o.uLat !== undefined ||
+        o.uLng !== undefined ||
+        o.radius !== undefined ||
+        o.sort === 'distance',
+    )
+    @IsDefined({ message: 'uLng je obavezan kada koristis radius, sort=distance ili uLat.' })
     @Type(() => Number)
     @IsNumber()
     @Min(-180)

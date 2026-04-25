@@ -1,4 +1,9 @@
-import { HttpException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+    BadRequestException,
+    HttpException,
+    Injectable,
+    InternalServerErrorException,
+} from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { SearchDto } from './dto/search-dto';
 import {
@@ -9,7 +14,7 @@ import {
 } from './types/mainSearch.type';
 
 @Injectable()
-export class RepositoryService {
+export class PharmaciesRepository {
 
     constructor(private db: DatabaseService) {}
 
@@ -33,6 +38,18 @@ export class RepositoryService {
             const havingParams: number[] = [];
             const hasCoordinates = uLat !== undefined && uLng !== undefined;
 
+            if (radius !== undefined && !hasCoordinates) {
+                throw new BadRequestException(
+                    'radius zahtijeva i uLat i uLng parametre.',
+                );
+            }
+
+            if (sort === 'distance' && !hasCoordinates) {
+                throw new BadRequestException(
+                    'sort=distance zahtijeva i uLat i uLng parametre.',
+                );
+            }
+
             const distanceSql = hasCoordinates
                 ? `6371 * ACOS(
                     LEAST(
@@ -49,11 +66,12 @@ export class RepositoryService {
                 )`
                 : 'NULL';
 
+            conditions.push('P.isActive = 1');
+
             conditions.push(`EXISTS (
                 SELECT 1
                 FROM Inventory I
                 WHERE I.pharmacy_id = P.id
-                  AND P.isActive = 1
                   AND I.dose_id IN (${dosePlaceholders})
                   AND I.quantity > 0
             )`);
@@ -137,6 +155,7 @@ export class RepositoryService {
                     WHERE I.pharmacy_id IN (${pharmacyIdPlaceholders})
                       AND I.dose_id IN (${dosePlaceholders})
                       AND I.quantity > 0
+                      AND D.isActive=1
                     ORDER BY D.strength ASC
                 `,
                 [...pharmacyIds, ...doseIds],

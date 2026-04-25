@@ -4,7 +4,7 @@
 import { Controller, Get, Query, Param } from '@nestjs/common';
 import { MedicationDto } from './dto/medication-dto';
 import { MedicationService } from './medication.service';
-import { ParsePositiveIntPipe } from 'src/common/pipes/parse-positive-int.pipe';
+import { ParsePositiveIntPipe } from '../common/pipes/parse-positive-int.pipe';
 import { ApiQuery } from '@nestjs/swagger';
 
 @Controller('api/v1/medication')
