@@ -132,7 +132,6 @@ export class RepositoryService {
                         I.pharmacy_id AS pharmacyId,
                         D.id AS doseId,
                         D.strength,
-                        I.quantity,
                         I.lastUpdated
                     FROM Inventory I
                     JOIN Doses D ON D.id = I.dose_id
@@ -154,7 +153,6 @@ export class RepositoryService {
                 dosesByPharmacy.get(row.pharmacyId)!.push({
                     doseId: row.doseId,
                     strength: row.strength,
-                    quantity: row.quantity,
                     lastUpdated: row.lastUpdated,
                 });
             }

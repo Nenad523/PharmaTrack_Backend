@@ -1,7 +1,6 @@
 export type SearchDose = {
     doseId: number;
     strength: string;
-    quantity: number;
     lastUpdated?: string;
 }
 
@@ -30,6 +29,5 @@ export type PharmacyDoseRow = {
     pharmacyId: number;
     doseId: number;
     strength: string;
-    quantity: number;
     lastUpdated?: string;
 }

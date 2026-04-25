@@ -7,7 +7,7 @@ export class PharmaciesService {
 
     constructor(private repo: RepositoryService) {}
 
-    searchPharmacies(searchDto: SearchDto){
-        return this.repo.searchPharmacies(searchDto);
+    async searchPharmacies(searchDto: SearchDto){
+        const response = await this.repo.searchPharmacies(searchDto);
     }
 }
