@@ -1,3 +1,5 @@
+export type AvailabilitySource = 'exception' | 'duty' | 'working_hours' | null;
+
 export type SearchDose = {
     doseId: number;
     strength: string;
@@ -12,6 +14,10 @@ export type MainSearch = {
     latitude: number;
     longitude: number;
     distance?: number | null;
+    isOpenNow: boolean;
+    isOnDuty: boolean;
+    openUntil: string | null;
+    availabilitySource: AvailabilitySource;
     doses: SearchDose[];
 }
 
@@ -23,6 +29,10 @@ export type PharmacySearchRow = {
     latitude: number;
     longitude: number;
     distance?: number | null;
+    isOpenNow: boolean;
+    isOnDuty: boolean;
+    openUntil: string | null;
+    availabilitySource: AvailabilitySource;
 }
 
 export type PharmacyDoseRow = {
