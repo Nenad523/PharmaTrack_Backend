@@ -167,7 +167,6 @@ export class RepositoryService {
                 count: data.length,
             };
         } catch (error) {
-            console.error('Pharmacy search failed:', error);
             if (error instanceof HttpException) throw error;
             throw new InternalServerErrorException('Došlo je do greške.');
         }
