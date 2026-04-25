@@ -967,3 +967,17 @@ INSERT INTO Inventory (quantity, dose_id, pharmacy_id) VALUES
 (19, 21, 30),
 (16, 23, 30),
 (5, 32, 30);
+
+-- =========================================================
+-- PHARMACY SCHEDULE EXCEPTIONS / HOLIDAYS
+-- =========================================================
+INSERT INTO PharmacyScheduleException
+    (exception_date, name, open_time, close_time, is_closed, reason, pharmacy_id)
+VALUES
+('2026-01-01', 'Nova godina', NULL, NULL, 1, 'holiday', 1),
+('2026-01-01', 'Nova godina', '09:00:00', '13:00:00', 0, 'holiday', 2),
+('2026-01-07', 'Bozic', NULL, NULL, 1, 'holiday', 3),
+('2026-01-07', 'Bozic', '10:00:00', '13:00:00', 0, 'holiday', 4),
+('2026-01-07', 'Bozic', '15:00:00', '18:00:00', 0, 'holiday', 4),
+('2026-05-01', 'Praznik rada', NULL, NULL, 1, 'holiday', 5),
+('2026-05-01', 'Praznik rada', '08:00:00', '12:00:00', 0, 'holiday', 10);
