@@ -19,10 +19,12 @@ import {
 
 export class SearchDto {
     
+    @Transform(({ value }) => Array.isArray(value) ? value : [value])
     @Type(() => Number)
-    @IsInt()
-    @Min(0)
-    doseId!: number;
+    @IsArray()
+    @IsInt({ each: true })
+    @Min(0, { each: true })
+    doseIds!: number[];
 
     @Type(() => Number)
     @IsNumber()
