@@ -36,7 +36,7 @@ CREATE TABLE Phone
 CREATE TABLE WorkingHours
 (
     id INT AUTO_INCREMENT,
-    day_of_week VARCHAR(20) NOT NULL,
+    day_of_week TINYINT NOT NULL,
     open_time TIME NOT NULL,
     close_time TIME NOT NULL,
     pharmacy_id INT,

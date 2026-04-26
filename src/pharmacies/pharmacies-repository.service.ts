@@ -181,16 +181,7 @@ export class PharmaciesRepository {
                             SELECT MIN(WH.close_time)
                             FROM WorkingHours WH
                             WHERE WH.pharmacy_id = P.id
-                              AND WH.day_of_week = ELT(
-                                  WEEKDAY(CURDATE()) + 1,
-                                  'Monday',
-                                  'Tuesday',
-                                  'Wednesday',
-                                  'Thursday',
-                                  'Friday',
-                                  'Saturday',
-                                  'Sunday'
-                              )
+                              AND WH.day_of_week = WEEKDAY(CURDATE()) + 1
                               AND CURTIME() BETWEEN WH.open_time AND WH.close_time
                         ) AS workingHoursClose
 
@@ -295,6 +286,29 @@ export class PharmaciesRepository {
         } catch (error) {
             if (error instanceof HttpException) throw error;
             throw new InternalServerErrorException('Došlo je do greške.');
+        }
+    }
+
+    async getWorkingHours(id: number){
+        
+        const rows = await this.db.query<any[]>(
+            `SELECT
+                ELT(WH.day_of_week, 'Ponedeljak', 'Utorak', 'Srijeda', 'Četvrtak', 'Petak', 'Subota', 'Nedelja') AS day_of_week,
+                WH.open_time,
+                WH.close_time
+            FROM WorkingHours WH
+            WHERE WH.pharmacy_id = ?
+            ORDER BY WH.day_of_week, WH.open_time`,
+            [id],
+        );
+
+        if (rows.length === 0){
+            throw new BadRequestException('Apoteka sa datim ID-em ne postoji.');
+        }
+
+        return {
+            success: true,
+            data: rows
         }
     }
 }

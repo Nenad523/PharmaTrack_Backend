@@ -11,6 +11,4 @@ export class PharmaciesService {
         const response = await this.repo.searchPharmacies(searchDto);
         return response;
     }
-
-
 }

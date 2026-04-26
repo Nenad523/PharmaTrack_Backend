@@ -1,8 +1,8 @@
-import { Controller, Get, Query } from '@nestjs/common';
-import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Query, Param } from '@nestjs/common';
+import { ApiOperation, ApiQuery, ApiTags, ApiParam } from '@nestjs/swagger';
 import { PharmaciesService } from './pharmacies.service';
 import { SearchDto } from './dto/search-dto';
-
+import { ParsePositiveIntPipe } from '../common/pipes/parse-positive-int.pipe';
 @ApiTags('Pharmacies')
 @Controller('api/v1/pharmacies')
 export class PharmaciesController {
@@ -87,4 +87,14 @@ export class PharmaciesController {
         return this.service.searchPharmacies(searchDto);
     }
 
+    @ApiOperation({ summary : 'Dohvatanje radnog vremena apoteke.'})
+    @ApiParam({
+        name: 'id', 
+        type: Number, 
+        description: 'ID apoteke'
+    })
+    @Get('/:id/workinghours')
+    getWorkingHours(@Param('id', ParsePositiveIntPipe) id: number){
+        return this.service.getWorkingHours(id);
+    }
 }
