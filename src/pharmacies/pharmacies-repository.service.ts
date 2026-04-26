@@ -11,6 +11,7 @@ import {
     AvailabilitySource,
     MainSearch,
     PharmacyAvailabilityRow,
+    PharmacyDetailRow,
     PharmacyDoseRow,
     PharmacySearchRow,
     SearchDose,
@@ -353,6 +354,76 @@ export class PharmaciesRepository {
                 success: true,
                 data: rows,
                 count: rows.length,
+            };
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške.');
+        }
+    }
+
+    async getAboutPharmacy(id: number) {
+        try {
+            const pharmacyRows = await this.db.query<PharmacyDetailRow[]>(
+                `SELECT
+                    P.id,
+                    P.name,
+                    P.address,
+                    C.name AS city,
+                    P.latitude,
+                    P.longitude,
+                    P.isActive,
+                    DS.start_datetime AS dutyStart,
+                    DS.end_datetime AS dutyEnd
+                FROM Pharmacy P
+                JOIN City C ON C.id = P.city_id
+                LEFT JOIN DutySchedule DS
+                    ON DS.pharmacy_id = P.id
+                    AND NOW() BETWEEN DS.start_datetime AND DS.end_datetime
+                WHERE P.id = ?
+                LIMIT 1`,
+                [id],
+            );
+
+            if (pharmacyRows.length === 0) {
+                throw new NotFoundException('Apoteka sa datim ID-em ne postoji.');
+            }
+
+            const pharmacy = pharmacyRows[0];
+
+            const [phones, workingHours] = await Promise.all([
+                this.db.query<{ number: string }[]>(
+                    `SELECT number FROM Phone WHERE pharmacy_id = ?`,
+                    [id],
+                ),
+                this.db.query<WorkingHours[]>(
+                    `SELECT
+                        ELT(day_of_week, 'Ponedeljak', 'Utorak', 'Srijeda', 'Četvrtak', 'Petak', 'Subota', 'Nedelja') AS day_of_week,
+                        open_time AS open_time,
+                        close_time AS close_time
+                    FROM WorkingHours
+                    WHERE pharmacy_id = ?
+                    ORDER BY day_of_week, open_time`,
+                    [id],
+                ),
+            ]);
+
+            return {
+                success: true,
+                data: {
+                    id: pharmacy.id,
+                    name: pharmacy.name,
+                    address: pharmacy.address,
+                    city: pharmacy.city,
+                    latitude: pharmacy.latitude,
+                    longitude: pharmacy.longitude,
+                    isActive: pharmacy.isActive,
+                    isOnDuty: pharmacy.dutyStart !== null,
+                    phones: phones.map(p => p.number),
+                    workingHours,
+                    dutySchedule: pharmacy.dutyStart
+                        ? { startDatetime: pharmacy.dutyStart, endDatetime: pharmacy.dutyEnd }
+                        : null,
+                },
             };
         } catch (error) {
             if (error instanceof HttpException) throw error;

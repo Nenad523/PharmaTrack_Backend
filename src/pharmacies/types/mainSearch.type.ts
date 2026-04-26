@@ -39,6 +39,18 @@ export type PharmacyAvailabilityRow = {
     workingHoursClose: string | null;
 };
 
+export type PharmacyDetailRow = {
+    id: number;
+    name: string;
+    address: string;
+    city: string;
+    latitude: number;
+    longitude: number;
+    isActive: boolean;
+    dutyStart: string | null;
+    dutyEnd: string | null;
+};
+
 export type PharmacyDoseRow = {
     pharmacyId: number;
     doseId: number;

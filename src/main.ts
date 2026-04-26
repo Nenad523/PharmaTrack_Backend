@@ -8,7 +8,7 @@ import session from 'express-session';
 import passport from 'passport';
 
 const config = new DocumentBuilder()
-  .setTitle('Workout API')
+  .setTitle('PharmaTrack API')
   .setDescription('API documentation')
   .setVersion('1.0')
   .build();

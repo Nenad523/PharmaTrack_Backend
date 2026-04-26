@@ -21,4 +21,9 @@ export class PharmaciesService {
         const response = await this.repo.getAllOnDuty(date);
         return response;
     }
+
+    async getAboutPharmacy(id: number){
+        const response = await this.repo.getAboutPharmacy(id);
+        return response;
+    }
 }

@@ -115,4 +115,17 @@ export class PharmaciesController {
         return this.service.getAllOnDuty(date);
     }
     
+    //-----------------------------------------------------------------
+
+    @ApiOperation({ summary : 'Dohvatanje svih detalja o konkretnoj apoteci.' })
+    @ApiParam({
+        name: 'id',
+        required: true,
+        type: Number,
+        description: 'id: integer — ID apoteke',
+    })
+    @Get('/:id')
+    getAboutPharmacy(@Param('id', ParsePositiveIntPipe) id: number){
+        return this.service.getAboutPharmacy(id);
+    }
 }
