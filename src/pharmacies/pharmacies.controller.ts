@@ -114,5 +114,5 @@ export class PharmaciesController {
     getAllOnDuty(@Query('date') date: string){
         return this.service.getAllOnDuty(date);
     }
-
+    
 }

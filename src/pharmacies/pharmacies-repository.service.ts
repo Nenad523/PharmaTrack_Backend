@@ -3,6 +3,7 @@ import {
     HttpException,
     Injectable,
     InternalServerErrorException,
+    NotFoundException,
 } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { SearchDto } from './dto/search-dto';
@@ -15,6 +16,8 @@ import {
     SearchDose,
 } from './types/mainSearch.type';
 
+import { WorkingHours } from './types/workingHours.type';
+import { OnDuty } from './types/onDuty.type';
 @Injectable()
 export class PharmaciesRepository {
 
@@ -291,7 +294,7 @@ export class PharmaciesRepository {
 
     async getWorkingHours(id: number){
         
-        const rows = await this.db.query<any[]>(
+        const rows = await this.db.query<WorkingHours[]>(
             `SELECT
                 ELT(WH.day_of_week, 'Ponedeljak', 'Utorak', 'Srijeda', 'Četvrtak', 'Petak', 'Subota', 'Nedelja') AS day_of_week,
                 WH.open_time,
@@ -312,7 +315,48 @@ export class PharmaciesRepository {
         }
     }
 
-    async getAllOnDuty(date: string){
+    async getAllOnDuty(date: string) {
+        if (!date) {
+            throw new BadRequestException('Datum je obavezan parametar.');
+        }
 
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+            throw new BadRequestException('Datum mora biti u formatu YYYY-MM-DD.');
+        }
+
+        try {
+            const rows = await this.db.query<OnDuty[]>(
+                `SELECT
+                    P.id,
+                    P.name,
+                    P.address,
+                    C.name AS city,
+                    GROUP_CONCAT(PH.number SEPARATOR ', ') AS phone,
+                    DS.start_datetime AS dutyStart,
+                    DS.end_datetime AS dutyEnd
+                FROM DutySchedule DS
+                JOIN Pharmacy P ON P.id = DS.pharmacy_id
+                JOIN City C ON C.id = P.city_id
+                LEFT JOIN Phone PH ON PH.pharmacy_id = P.id
+                WHERE ? BETWEEN DATE(DS.start_datetime) AND DATE(DS.end_datetime)
+                  AND P.isActive = 1
+                GROUP BY P.id, P.name, P.address, C.name, DS.start_datetime, DS.end_datetime
+                ORDER BY P.name`,
+                [date],
+            );
+
+            if (rows.length === 0) {
+                throw new NotFoundException('Nema dežurnih apoteka za odabrani datum.');
+            }
+
+            return {
+                success: true,
+                data: rows,
+                count: rows.length,
+            };
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške.');
+        }
     }
 }
