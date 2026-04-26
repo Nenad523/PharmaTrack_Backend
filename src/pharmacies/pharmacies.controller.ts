@@ -87,7 +87,9 @@ export class PharmaciesController {
         return this.service.searchPharmacies(searchDto);
     }
 
-    @ApiOperation({ summary : 'Dohvatanje radnog vremena apoteke.'})
+    //-----------------------------------------------------------------
+
+    @ApiOperation({ summary : 'Dohvatanje radnog vremena apoteke za sve dane u sedmici.' })
     @ApiParam({
         name: 'id', 
         type: Number, 
@@ -97,4 +99,20 @@ export class PharmaciesController {
     getWorkingHours(@Param('id', ParsePositiveIntPipe) id: number){
         return this.service.getWorkingHours(id);
     }
+
+    //-----------------------------------------------------------------
+
+    @ApiOperation({ summary : 'Dohvatanje liste dežurnih apoteka za odabrani datum.' })
+    @ApiQuery({
+        name: 'date',
+        required: true,
+        type: String,
+        description: 'Datum u formatu YYYY-MM-DD',
+        example: '2026-04-26'
+    })
+    @Get('/duty')
+    getAllOnDuty(@Query('date') date: string){
+        return this.service.getAllOnDuty(date);
+    }
+
 }

@@ -311,4 +311,8 @@ export class PharmaciesRepository {
             data: rows
         }
     }
+
+    async getAllOnDuty(date: string){
+
+    }
 }
