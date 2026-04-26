@@ -11,4 +11,14 @@ export class PharmaciesService {
         const response = await this.repo.searchPharmacies(searchDto);
         return response;
     }
+
+    async getWorkingHours(id: number){
+        const response = await this.repo.getWorkingHours(id);
+        return response;
+    }
+
+    async getAllOnDuty(date: string){
+        const response = await this.repo.getAllOnDuty(date);
+        return response;
+    }
 }
