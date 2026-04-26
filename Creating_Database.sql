@@ -58,6 +58,22 @@ CREATE TABLE DutySchedule
     INDEX idx_dutyschedule(pharmacy_id)
 );
 
+CREATE TABLE PharmacyScheduleException
+(
+    id INT AUTO_INCREMENT,
+    exception_date DATE NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    open_time TIME NULL,
+    close_time TIME NULL,
+    is_closed TINYINT(1) DEFAULT 0,
+    reason ENUM('holiday', 'special_hours', 'closure') DEFAULT 'holiday',
+    pharmacy_id INT NOT NULL,
+
+    CONSTRAINT pk_PharmacyScheduleException PRIMARY KEY(id),
+    CONSTRAINT fk_PharmacyScheduleException FOREIGN KEY(pharmacy_id) REFERENCES Pharmacy(id),
+    INDEX idx_schedule_exception_lookup(pharmacy_id, exception_date, reason)
+);
+
 CREATE TABLE Users
 (
     id INT AUTO_INCREMENT,

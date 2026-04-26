@@ -5,7 +5,7 @@
 
 import { HttpException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { MedicationDto } from './dto/medication-dto';
-import { DatabaseService } from 'src/database/database.service';
+import { DatabaseService } from '../database/database.service';
 import { MedicationCard } from './types/medication-list.type';
 import { MedicationPanel } from './types/medication-panel.type';
 import { MedicationRow } from './types/medication-row';
