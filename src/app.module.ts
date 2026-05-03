@@ -10,10 +10,18 @@ import { MedicationModule } from './medication/medication.module';
 import { AuthenticationModule } from './authentication/authentication.module';
 import { PharmaciesModule } from './pharmacies/pharmacies.module';
 import { CitiesModule } from './cities/cities.module';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
-      ConfigModule.forRoot({
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 10
+      }
+    ]),
+    ConfigModule.forRoot({
         isGlobal: true,
     }),
     DatabaseModule,
@@ -22,6 +30,12 @@ import { CitiesModule } from './cities/cities.module';
     PharmaciesModule,
     CitiesModule],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard
+    }
+  ],
 })
 export class AppModule {}

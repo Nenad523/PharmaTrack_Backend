@@ -4,19 +4,21 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable prettier/prettier */
-import { Controller, Post, Request, UseGuards, Get, Body, Query } from '@nestjs/common';
+import { Controller, Post, Request, UseGuards, Get, Body, Query, BadRequestException } from '@nestjs/common';
 import { AuthenticationService } from './authentication.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('api/v1/auth')
 export class AuthenticationController {
 
     constructor(private authService: AuthenticationService) {}
-
+    
     @ApiOperation({ 'summary' : 'Prijavljivanje putem emaila i lozinke'})
+    @Throttle( { default : { limit: 5, ttl: 300000 } } )
     @UseGuards(AuthGuard('local'))
     @Post('/login')
     async login(@Body() _loginDto: LoginDto, @Request() req){
@@ -35,6 +37,7 @@ export class AuthenticationController {
     }
 
     @ApiOperation({ 'summary' : 'Dohvatanje podataka o trenutno prijavljenom korisniku.'})
+    
     @Get('/me')
     getMe(@Request() req){
         return req.user;
@@ -48,6 +51,7 @@ export class AuthenticationController {
     }
 
     @ApiOperation({ 'summary' : 'Kreiranje naloga.'})
+    @Throttle( { default : { limit: 3, ttl: 600000}} )
     @Post('/register')
     async register(@Body() body: RegisterDto) {
         const { email, password, fullName } = body;
@@ -56,8 +60,13 @@ export class AuthenticationController {
     }
 
     @ApiOperation({ 'summary' : 'Verifikacija mail adrese nakon kreiranja naloga.'})
+    @Throttle({ default: { limit: 5, ttl: 3600000 } })
     @Get('/verify-email')
     async verifyEmail(@Query('token') token: string){
+        if (!token || !/^[a-f0-9]{64}$/.test(token)) {
+            throw new BadRequestException('Token nije validan.');
+        }
+        
         return this.authService.verifyEmail(token);
     }
 }

@@ -56,10 +56,15 @@ export class RepositoryService {
     }
 
     async create({fullName, email, password, verificationToken, verificationTokenExpiry}: CreateUserInput){
+        
+        if (!password || password.length < 60) {
+            throw new Error('Password must be pre-hashed with bcrypt');
+        }
+
         const result = await this.db.query<ResultSetHeader>(
             'INSERT INTO Users \
             (fullName, email, passwordHash, role, verificationToken, verificationTokenExpiry) VALUES (?, ?, ?, ?, ?, ?)',
-            [fullName, email, password, 'user', verificationToken, verificationTokenExpiry]
+            [fullName, email, password, 'user', verificationToken, verificationTokenExpiry.toISOString()]
         );
 
         if (result.affectedRows === 0) {
