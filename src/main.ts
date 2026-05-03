@@ -68,9 +68,10 @@ async function bootstrap() {
       cookie: {
         httpOnly: true,
         secure: isProduction,
-        sameSite: 'strict',
+        // 'none' is required for cross-origin (Vercel → Railway); CSRF middleware
+        // provides the CSRF protection that makes this safe in production.
+        sameSite: isProduction ? 'none' : 'lax',
         maxAge: 1800000,
-        domain: isProduction ? '.pharmatrack.me' : undefined,
         path: '/',
       },
     }),
