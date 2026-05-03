@@ -7,6 +7,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import session from 'express-session';
 import passport from 'passport';
 import helmet from 'helmet';
+import { randomBytes } from 'crypto';
 
 const config = new DocumentBuilder()
   .setTitle('PharmaTrack API')
@@ -14,18 +15,26 @@ const config = new DocumentBuilder()
   .setVersion('1.0')
   .build();
 
+const ALLOWED_HOSTS = (process.env.ALLOWED_HOSTS || 'api.pharmatrack.me')
+  .split(',')
+  .map(h => h.trim());
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const isProduction = process.env.NODE_ENV === 'production';
 
-  // ✅ Security headers
   app.use(helmet());
 
-  // ✅ HTTPS redirect u produkciji
+  // HTTPS redirect with host header validation to prevent open redirect
   if (isProduction) {
     app.use((req, res, next) => {
       if (req.header('x-forwarded-proto') !== 'https') {
-        return res.redirect(301, `https://${req.header('host')}${req.url}`);
+        
+        const host = req.header('host');
+        if (!host || !ALLOWED_HOSTS.includes(host)) {
+          return res.status(400).json({ error: 'Invalid host header', code: 'INVALID_HOST' });
+        }
+        return res.redirect(301, `https://${host}${req.url}`);
       }
       next();
     });
@@ -39,7 +48,7 @@ async function bootstrap() {
     origin: allowedOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
   });
 
   app.useGlobalPipes(
@@ -59,11 +68,21 @@ async function bootstrap() {
       cookie: {
         httpOnly: true,
         secure: isProduction,
-        sameSite: isProduction ? 'none' : 'lax',
-        maxAge: 1800000, // ✅ 30 minuta
+        sameSite: 'strict',
+        maxAge: 1800000,
+        domain: isProduction ? '.pharmatrack.me' : undefined,
+        path: '/',
       },
     }),
   );
+
+  // Generate CSRF token per session
+  app.use((req: any, _res: any, next: any) => {
+    if (!req.session.csrfToken) {
+      req.session.csrfToken = randomBytes(32).toString('hex');
+    }
+    next();
+  });
 
   app.use(passport.initialize());
   app.use(passport.session());
