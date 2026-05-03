@@ -4,7 +4,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable prettier/prettier */
-import { Controller, Post, Request, UseGuards, Get, Body, Query } from '@nestjs/common';
+import { Controller, Post, Request, UseGuards, Get, Body, Query, BadRequestException } from '@nestjs/common';
 import { AuthenticationService } from './authentication.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -63,6 +63,10 @@ export class AuthenticationController {
     @Throttle({ default: { limit: 5, ttl: 3600000 } })
     @Get('/verify-email')
     async verifyEmail(@Query('token') token: string){
+        if (!token || !/^[a-f0-9]{64}$/.test(token)) {
+            throw new BadRequestException('Token nije validan.');
+        }
+        
         return this.authService.verifyEmail(token);
     }
 }
