@@ -10,6 +10,7 @@ import { MedicationModule } from './medication/medication.module';
 import { AuthenticationModule } from './authentication/authentication.module';
 import { PharmaciesModule } from './pharmacies/pharmacies.module';
 import { CitiesModule } from './cities/cities.module';
+import { NewsModule } from './news/news.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { CsrfMiddleware } from './common/middleware/csrf.middleware';
@@ -29,7 +30,8 @@ import { CsrfMiddleware } from './common/middleware/csrf.middleware';
     MedicationModule,
     AuthenticationModule,
     PharmaciesModule,
-    CitiesModule],
+    CitiesModule,
+    NewsModule],
   controllers: [AppController],
   providers: [
     AppService,
