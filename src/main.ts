@@ -27,15 +27,33 @@ async function bootstrap() {
 
   // HTTPS redirect with host header validation to prevent open redirect
   if (isProduction) {
-    app.use((req, res, next) => {
-      if (req.header('x-forwarded-proto') !== 'https') {
-        
+    const allowedPaths = ['/api/v1/', '/swagger']; // Whitelist safe paths
+
+app.use((req, res, next) => {
+    if (req.header('x-forwarded-proto') !== 'https') {
         const host = req.header('host');
+        
         if (!host || !ALLOWED_HOSTS.includes(host)) {
           return res.status(400).json({ error: 'Invalid host header', code: 'INVALID_HOST' });
         }
-        return res.redirect(301, `https://${host}${req.url}`);
+        
+        // Only redirect safe paths, reject query strings with suspicious patterns
+        const path = req.path;
+        if (!allowedPaths.some(allowed => path.startsWith(allowed))) {
+          return res.status(400).json({ error: 'Invalid request path' });
+        }
+        
+        // Reconstruct URL safely without user-controlled parts
+        const safeUrl = `https://${host}${path}`;
+        
+        // Additional validation: reject URLs with @ or encoded characters
+        if (safeUrl.includes('@') || /%/.test(decodeURIComponent(req.url))) {
+          return res.status(400).json({ error: 'Invalid URL format' });
+        }
+        
+        return res.redirect(301, safeUrl);
       }
+
       next();
     });
   }
