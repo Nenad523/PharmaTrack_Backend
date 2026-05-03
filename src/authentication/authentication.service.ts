@@ -55,10 +55,22 @@ export class AuthenticationService {
     }
 
     async register(email: string, password: string, fullName: string){
-        
+
         const existingUser = await this.rep.findByEmail(email);
         if (existingUser){
             throw new BadRequestException('Korisnik sa ovom email adresom već postoji.');
+        }
+
+        if (
+            password.length < 12 ||
+            !/[A-Z]/.test(password) ||
+            !/[a-z]/.test(password) ||
+            !/[0-9]/.test(password) ||
+            !/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
+        ) {
+            throw new BadRequestException(
+                'Lozinka mora imati najmanje 12 karaktera sa velikim i malim slovima, brojem i specijalnim karakterom.'
+            );
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);

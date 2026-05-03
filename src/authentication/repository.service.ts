@@ -34,8 +34,8 @@ export class RepositoryService {
 
     async findByToken(verificationToken: string){
         const users = await this.db.query<any[]>(
-            'SELECT * from Users WHERE verificationToken = ? \
-             AND verificationTokenExpiry > NOW()', [verificationToken]
+            'SELECT * FROM Users WHERE verificationToken = ? AND verificationTokenExpiry > NOW()',
+            [verificationToken]
         );
 
         return users;
@@ -43,11 +43,8 @@ export class RepositoryService {
 
     async updateToken(verificationToken: string){
         const result = await this.db.query<ResultSetHeader>(
-            'UPDATE Users SET \
-                isVerified=1, \
-                verificationTokenExpiry=NULL,\
-                verificationToken=NULL \
-                WHERE verificationToken=?', [verificationToken]
+            'UPDATE Users SET isVerified = 1, verificationTokenExpiry = NULL, verificationToken = NULL WHERE verificationToken = ?',
+            [verificationToken]
         );
 
         if (result.affectedRows === 0){
