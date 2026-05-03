@@ -12,7 +12,8 @@ export class CsrfMiddleware implements NestMiddleware {
             return next();
         }
 
-        if (CSRF_EXEMPT_PATHS.includes(req.path)) {
+        const reqPath = req.originalUrl.split('?')[0];
+        if (CSRF_EXEMPT_PATHS.includes(reqPath)) {
             return next();
         }
 
