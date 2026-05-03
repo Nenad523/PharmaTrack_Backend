@@ -34,8 +34,8 @@ export class RepositoryService {
 
     async findByToken(verificationToken: string){
         const users = await this.db.query<any[]>(
-            'SELECT * from Users WHERE verificationToken = ? \
-             AND verificationTokenExpiry > NOW()', [verificationToken]
+            'SELECT * FROM Users WHERE verificationToken = ? AND verificationTokenExpiry > NOW()',
+            [verificationToken]
         );
 
         return users;
@@ -43,11 +43,8 @@ export class RepositoryService {
 
     async updateToken(verificationToken: string){
         const result = await this.db.query<ResultSetHeader>(
-            'UPDATE Users SET \
-                isVerified=1, \
-                verificationTokenExpiry=NULL,\
-                verificationToken=NULL \
-                WHERE verificationToken=?', [verificationToken]
+            'UPDATE Users SET isVerified = 1, verificationTokenExpiry = NULL, verificationToken = NULL WHERE verificationToken = ?',
+            [verificationToken]
         );
 
         if (result.affectedRows === 0){
@@ -56,10 +53,15 @@ export class RepositoryService {
     }
 
     async create({fullName, email, password, verificationToken, verificationTokenExpiry}: CreateUserInput){
+        
+        if (!password || password.length < 60) {
+            throw new Error('Password must be pre-hashed with bcrypt');
+        }
+
         const result = await this.db.query<ResultSetHeader>(
             'INSERT INTO Users \
             (fullName, email, passwordHash, role, verificationToken, verificationTokenExpiry) VALUES (?, ?, ?, ?, ?, ?)',
-            [fullName, email, password, 'user', verificationToken, verificationTokenExpiry]
+            [fullName, email, password, 'user', verificationToken, verificationTokenExpiry.toISOString()]
         );
 
         if (result.affectedRows === 0) {
