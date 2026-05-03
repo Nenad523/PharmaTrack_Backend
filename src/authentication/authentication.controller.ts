@@ -45,9 +45,19 @@ export class AuthenticationController {
 
     @ApiOperation({ 'summary' : 'Odjavljivanje sa prijavljenog naloga.'})
     @Post('/logout')
-    logout(@Request() req){
-        req.logout(() => {});
-        return { message : 'Logged out'};
+    async logout(@Request() req): Promise<{ message: string }> {
+        await new Promise<void>((resolve, reject) => {
+            req.logout((err: Error) => {
+                if (err) reject(err);
+                else resolve();
+            });
+        });
+
+        await new Promise<void>((resolve) => {
+            req.session.destroy(() => resolve());
+        });
+
+        return { message: 'Logged out' };
     }
 
     @ApiOperation({ 'summary' : 'Kreiranje naloga.'})
