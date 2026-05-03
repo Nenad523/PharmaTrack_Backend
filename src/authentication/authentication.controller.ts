@@ -64,9 +64,22 @@ export class AuthenticationController {
     @Get('/verify-email')
     async verifyEmail(@Query('token') token: string){
         if (!token || !/^[a-f0-9]{64}$/.test(token)) {
+            // Constant-time delay prevents timing-based token enumeration
+            await new Promise(resolve => setTimeout(resolve, 100 + Math.random() * 100));
             throw new BadRequestException('Token nije validan.');
         }
-        
-        return this.authService.verifyEmail(token);
+
+        try {
+            return await this.authService.verifyEmail(token);
+        } catch {
+            await new Promise(resolve => setTimeout(resolve, 100 + Math.random() * 100));
+            throw new BadRequestException('Token nije validan ili je istekao.');
+        }
+    }
+
+    @ApiOperation({ 'summary' : 'Dohvatanje CSRF tokena za tekuću sesiju.' })
+    @Get('/csrf-token')
+    getCsrfToken(@Request() req){
+        return { csrfToken: (req.session as any).csrfToken ?? null };
     }
 }
