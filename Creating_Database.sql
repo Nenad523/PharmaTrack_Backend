@@ -147,3 +147,24 @@ CREATE TABLE Inventory
     CONSTRAINT fk2_Inventory FOREIGN KEY(pharmacy_id) REFERENCES Pharmacy(id),
     INDEX idx_inventory_search(dose_id, pharmacy_id)
 );
+
+CREATE TABLE News
+(
+    id INT AUTO_INCREMENT,
+    article_id VARCHAR(255) NOT NULL UNIQUE,
+    title VARCHAR(500) NOT NULL,
+    description TEXT,
+    link VARCHAR(1000) NOT NULL,
+    image_url VARCHAR(1000),
+    source_id VARCHAR(255),
+    source_url VARCHAR(1000),
+    category VARCHAR(100),
+    language VARCHAR(10),
+    country VARCHAR(10),
+    pub_date DATETIME NOT NULL,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL,
+
+    CONSTRAINT pk_News PRIMARY KEY(id),
+    INDEX idx_news_pub_date(pub_date DESC)
+);

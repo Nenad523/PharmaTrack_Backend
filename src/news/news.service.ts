@@ -23,7 +23,11 @@ export class NewsService implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   async onModuleInit() {
-    await this.scheduleRefreshCycle();
+    await this.scheduleRefreshCycle().catch((error: unknown) => {
+      this.logger.error(
+        `Neuspješna inicijalizacija news modula: ${this.getErrorMessage(error)}`,
+      );
+    });
   }
 
   onModuleDestroy() {
