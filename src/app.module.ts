@@ -10,6 +10,7 @@ import { MedicationModule } from './medication/medication.module';
 import { AuthenticationModule } from './authentication/authentication.module';
 import { PharmaciesModule } from './pharmacies/pharmacies.module';
 import { CitiesModule } from './cities/cities.module';
+import { NewsModule } from './news/news.module';
 
 @Module({
   imports: [
@@ -20,7 +21,8 @@ import { CitiesModule } from './cities/cities.module';
     MedicationModule,
     AuthenticationModule,
     PharmaciesModule,
-    CitiesModule],
+    CitiesModule,
+    NewsModule],
   controllers: [AppController],
   providers: [AppService],
 })
