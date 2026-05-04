@@ -181,7 +181,7 @@ export class MedicationRepository {
         try {
             
             const rows = await this.db.query<string[]>(
-                'SELECT name FROM Medication M ORDER BY search_count DESC'
+                'SELECT name FROM Medication M ORDER BY search_count DESC LIMIT 7'
             );
 
             if (rows.length === 0){
@@ -191,6 +191,10 @@ export class MedicationRepository {
                 }
             }
 
+            return {
+                success: true,
+                data: rows
+            }
 
         } catch (error) {
             if (error instanceof HttpException) throw error;
