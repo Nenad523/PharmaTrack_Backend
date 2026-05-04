@@ -19,6 +19,12 @@ export class MedicationController {
         return this.medicationService.searchAll(medication.name);
     }
 
+    @ApiOperation({ 'summary' : 'Dohvatanje popularnih lijekova'})
+    @Get('/popular')
+    getPopular(){
+        return this.medicationService.getPopular();
+    }
+
     @ApiOperation({ 'summary' : 'Dohvatanje detaljnih informacija o konkretnom lijeku.'})
     @Get(':id')
     searchMedication(@Param('id', ParsePositiveIntPipe) id: number){
@@ -37,9 +43,4 @@ export class MedicationController {
         return this.medicationService.getAlternatives(id);
     }
 
-    @ApiOperation({ 'summary' : 'Dohvatanje popularnih lijekova'})
-    @Get('/popular')
-    getPopular(){
-        return this.medicationService.getPopular();
-    }
 }
