@@ -288,7 +288,8 @@ export class PharmaciesRepository {
                 `UPDATE Medication M
                  JOIN Doses D ON D.medication_id = M.id
                  SET M.search_count = M.search_count + 1
-                 WHERE D.id IN (${dosePlaceholders})`
+                 WHERE D.id IN (${dosePlaceholders})`,
+                doseIds,
             );
 
             return {
