@@ -38,6 +38,7 @@ export class PharmaciesRepository {
                 address,
                 openNow,
                 onDuty,
+                trackSearch,
             } = searchDto;
 
             const dosePlaceholders = doseIds.map(() => '?').join(', ');
@@ -283,14 +284,15 @@ export class PharmaciesRepository {
                 data = data.filter((pharmacy) => pharmacy.isOnDuty);
             }
             
-            // Incrementing the search count for the searched medicine
-            const result = await this.db.query<ResultSetHeader>(
-                `UPDATE Medication M
-                 JOIN Doses D ON D.medication_id = M.id
-                 SET M.search_count = M.search_count + 1
-                 WHERE D.id IN (${dosePlaceholders})`,
-                doseIds,
-            );
+            if (trackSearch) {
+                await this.db.query<ResultSetHeader>(
+                    `UPDATE Medication M
+                     JOIN Doses D ON D.medication_id = M.id
+                     SET M.search_count = M.search_count + 1
+                     WHERE D.id IN (${dosePlaceholders})`,
+                    doseIds,
+                );
+            }
 
             return {
                 success: true,

@@ -127,4 +127,13 @@ export class SearchDto {
     @IsOptional()
     @IsString()
     address?: string;
+
+    @ApiPropertyOptional({
+        example: true,
+        description: 'Kada je true, uvecava search_count za trazeni lijek. Salji samo kada korisnik klikne Pretrazi apoteke.',
+    })
+    @IsOptional()
+    @Transform(({ value }) => value === 'true' || value === true)
+    @IsBoolean()
+    trackSearch?: boolean;
 }
