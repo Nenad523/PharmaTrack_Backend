@@ -6,6 +6,7 @@ import {
     NotFoundException,
 } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
+import { ResultSetHeader } from 'mysql2/promise';
 import { SearchDto } from './dto/search-dto';
 import {
     AvailabilitySource,
@@ -281,6 +282,14 @@ export class PharmaciesRepository {
             if (onDuty === true) {
                 data = data.filter((pharmacy) => pharmacy.isOnDuty);
             }
+            
+            // Incrementing the search count for the searched medicine
+            const result = await this.db.query<ResultSetHeader>(
+                `UPDATE Medication M
+                 JOIN Doses D ON D.medication_id = M.id
+                 SET M.search_count = M.search_count + 1
+                 WHERE D.id IN (${dosePlaceholders})`
+            );
 
             return {
                 success: true,
