@@ -175,4 +175,26 @@ export class MedicationRepository {
             throw new InternalServerErrorException('Došlo je do greške.');
         }
     }
+
+    async getPopular(){
+
+        try {
+            
+            const rows = await this.db.query<string[]>(
+                'SELECT name FROM Medication M ORDER BY search_count DESC'
+            );
+
+            if (rows.length === 0){
+                return {
+                         data: [],
+                         message: `Nijedan lijek još nije pretražen.`
+                }
+            }
+
+
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške.');
+        }
+    }
 }

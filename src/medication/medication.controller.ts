@@ -36,4 +36,10 @@ export class MedicationController {
     getAlternatives(@Param('id', ParsePositiveIntPipe) id: number){
         return this.medicationService.getAlternatives(id);
     }
+
+    @ApiOperation({ 'summary' : 'Dohvatanje popularnih lijekova'})
+    @Get('/popular')
+    getPopular(){
+        return this.medicationService.getPopular();
+    }
 }

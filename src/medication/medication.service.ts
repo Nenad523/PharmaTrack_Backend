@@ -24,4 +24,8 @@ export class MedicationService {
         return this.rep.getAlternatives(id);
     }
 
+    getPopular(){
+        return this.rep.getPopular();
+    }
+
 }
