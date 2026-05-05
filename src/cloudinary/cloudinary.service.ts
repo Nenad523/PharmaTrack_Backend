@@ -15,13 +15,14 @@ export class CloudinaryService {
 
   async uploadImage(file: Express.Multer.File): Promise<string> {
     return new Promise((resolve, reject) => {
-      cloudinary.uploader.upload_stream(
+        cloudinary.uploader.upload_stream(
         {
           folder: 'pharmatrack/medications',
           transformation: [
-            { width: 500, height: 500, crop: 'limit' },  // max 500x500
-            { quality: 'auto' },                          // automatska kompresija
-            { fetch_format: 'auto' }                      // optimalni format
+            { width: 500, height: 500, crop: 'limit' },
+            { quality: 'auto' },
+            { fetch_format: 'auto' },
+            { effect: 'trim' }  // ← uklanja bijeli prostor oko slike
           ]
         },
         (error, result) => {
