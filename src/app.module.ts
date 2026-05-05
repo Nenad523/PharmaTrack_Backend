@@ -14,6 +14,7 @@ import { NewsModule } from './news/news.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { CsrfMiddleware } from './common/middleware/csrf.middleware';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -31,7 +32,8 @@ import { CsrfMiddleware } from './common/middleware/csrf.middleware';
     AuthenticationModule,
     PharmaciesModule,
     CitiesModule,
-    NewsModule],
+    NewsModule,
+    CloudinaryModule],
   controllers: [AppController],
   providers: [
     AppService,
