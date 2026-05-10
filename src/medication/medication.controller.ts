@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable prettier/prettier */
 
-import { Controller, Get, Query, Param } from '@nestjs/common';
+import { Controller, Get, Query, Param, BadRequestException } from '@nestjs/common';
 import { MedicationDto } from './dto/medication-dto';
 import { MedicationService } from './medication.service';
 import { ParsePositiveIntPipe } from '../common/pipes/parse-positive-int.pipe';
@@ -12,11 +12,23 @@ export class MedicationController {
 
     constructor(private medicationService: MedicationService) {}
 
-    @ApiOperation({ 'summary' : 'Pretraga lijekova po nazivu.'})
+    @ApiOperation({ 'summary' : 'Pretraga lijekova po nazivu(simptomu).'})
     @Get('/search')
     @ApiQuery({ name: 'name', required: false, type: String })
-    searchMedications(@Query() medication: MedicationDto){
-        return this.medicationService.searchAll(medication.name);
+    @ApiQuery({ name: 'symptom', required: false, type: String })
+    searchMedications(
+        @Query("name") name?: string,
+        @Query("symptom") symptom?: string
+    ){
+        if (symptom) {
+            return this.medicationService.searchBySymptom(symptom.trim());
+        }
+
+        if (!name || name.trim().length < 3) {
+            throw new BadRequestException("Naziv mora imati najmanje 3 karaktera.");
+        }
+
+        return this.medicationService.searchAll(name.trim());
     }
 
     @ApiOperation({ 'summary' : 'Dohvatanje popularnih lijekova'})
