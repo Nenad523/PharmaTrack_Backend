@@ -28,4 +28,8 @@ export class MedicationService {
         return this.rep.getPopular();
     }
 
+    searchBySymptom(symptom: string){
+        return this.rep.searchBySymptom(symptom);
+    }
+
 }
