@@ -12,7 +12,7 @@ export class MedicationController {
 
     constructor(private medicationService: MedicationService) {}
 
-    @ApiOperation({ 'summary' : 'Pretraga lijekova po nazivu.'})
+    @ApiOperation({ 'summary' : 'Pretraga lijekova po nazivu(simptomu).'})
     @Get('/search')
     @ApiQuery({ name: 'name', required: false, type: String })
     @ApiQuery({ name: 'symptom', required: false, type: String })
@@ -27,7 +27,7 @@ export class MedicationController {
         if (!name || name.trim().length < 3) {
             throw new BadRequestException("Naziv mora imati najmanje 3 karaktera.");
         }
-        
+
         return this.medicationService.searchAll(name.trim());
     }
 
