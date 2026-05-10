@@ -4,7 +4,6 @@
 /* eslint-disable prettier/prettier */
 
 import { HttpException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { MedicationDto } from './dto/medication-dto';
 import { DatabaseService } from '../database/database.service';
 import { MedicationCard } from './types/medication-list.type';
 import { MedicationPanel } from './types/medication-panel.type';
@@ -208,34 +207,51 @@ export class MedicationRepository {
 
     async searchBySymptom(symptom: string){
 
-        // 1. Generisati embedding za uneseni simptom
-        const symptomVector = await this.embeddingService.getEmbedding(symptom);
+        try {
+            // 1. Generisati embedding za uneseni simptom
+            const symptomVector = await this.embeddingService.getEmbedding(symptom);
 
-        // 2. Dohvati sve lijekove sa embeddings
-        const rows = await this.db.query<any[]>(
-            "SELECT id, name, description, img_url, embedding FROM Medication WHERE isActive = 1 AND embedding IS NOT NULL"
-        );
+            // 2. Dohvati sve lijekove sa embeddings
+            const rows = await this.db.query<any[]>(
+                "SELECT id, name, description, img_url, embedding FROM Medication WHERE isActive = 1 AND embedding IS NOT NULL"
+            );
 
-        // 3. Izračunaj cosine similarity za svaki lijek
-        const scored = rows
-            .map((med) => ({
-            id: med.id,
-            name: med.name,
-            description: med.description,
-            img_url: med.img_url,
-            score: this.embeddingService.cosineSimilarity(
-                symptomVector,
-                JSON.parse(med.embedding) as number[]
-            ),
-            }))
-            .sort((a, b) => b.score - a.score)
-            .slice(0, 5);
-        
-            
-        return {
-            success: true,
-            data: scored.map(({ score: _score, ...med }) => med),
-            count: scored.length,
-        };
+            if (rows.length === 0) {
+                return {
+                    success: true,
+                    data: [],
+                    count: 0,
+                    message: 'Pretraga po simptomu nije dostupna. Embeddinzi još nijesu generisani.'
+                };
+            }
+
+            // 3. Izračunaj cosine similarity za svaki lijek
+            const scored = rows
+                .map((med) => ({
+                    id: med.id,
+                    name: med.name,
+                    description: med.description,
+                    img_url: med.img_url,
+                    score: this.embeddingService.cosineSimilarity(
+                        symptomVector,
+                        Array.isArray(med.embedding)
+                            ? (med.embedding as number[])
+                            : (JSON.parse(med.embedding as string) as number[])
+                    ),
+                }))
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 5);
+
+            return {
+                success: true,
+                data: scored.map(({ score: _score, ...med }) => med),
+                count: scored.length,
+            };
+
+        } catch (error) {
+            console.error('[searchBySymptom] Greška:', error);
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Pretraga po simptomu nije uspjela. Provjerite konfiguraciju.');
+        }
     }
 }
