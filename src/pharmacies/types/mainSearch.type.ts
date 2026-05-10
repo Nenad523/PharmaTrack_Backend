@@ -13,6 +13,7 @@ export type MainSearch = {
     city: string;
     latitude: number;
     longitude: number;
+    isActive: boolean;
     distance?: number | null;
     isOpenNow: boolean;
     isOnDuty: boolean;
@@ -28,6 +29,7 @@ export type PharmacySearchRow = {
     city: string;
     latitude: number;
     longitude: number;
+    isActive: boolean;
     distance?: number | null;
 };
 

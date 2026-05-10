@@ -1,19 +1,33 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import OpenAI from 'openai';
 
 @Injectable()
 export class EmbeddingService {
 
-    private openai: OpenAI;
+    private openai: OpenAI | null = null;
+    private readonly apiKey: string | undefined;
 
     constructor(private config: ConfigService) {
-        this.openai = new OpenAI({ apiKey : this.config.get("OPENAI_API_KEY")});
+        this.apiKey = this.config.get<string>('OPENAI_API_KEY');
+    }
+
+    private getClient(): OpenAI {
+        if (!this.apiKey) {
+            throw new ServiceUnavailableException(
+                'Pretraga po simptomu nije dostupna jer OPENAI_API_KEY nije podeÅ¡en.',
+            );
+        }
+
+        if (!this.openai) {
+            this.openai = new OpenAI({ apiKey: this.apiKey });
+        }
+
+        return this.openai;
     }
 
     async getEmbedding(text: string) : Promise<number[]> {
-        
-        const response = await this.openai.embeddings.create({
+        const response = await this.getClient().embeddings.create({
             model: "text-embedding-3-small",
             input: text
         });
