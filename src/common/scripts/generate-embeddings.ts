@@ -13,6 +13,9 @@ async function run() {
     user: process.env.DB_USERNAME,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 0,
+    waitForConnections: true,
   });
 
   const [rows] = await pool.query<any[]>(
