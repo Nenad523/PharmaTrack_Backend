@@ -15,6 +15,7 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { CsrfMiddleware } from './common/middleware/csrf.middleware';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { EmbeddingService } from './common/embedding/embedding.service';
 
 @Module({
   imports: [
@@ -40,7 +41,8 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard
-    }
+    },
+    EmbeddingService
   ],
 })
 export class AppModule implements NestModule {
