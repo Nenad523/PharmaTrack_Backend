@@ -21,7 +21,12 @@ export class DatabaseService implements OnModuleDestroy {
         waitForConnections: true,
         connectionLimit: 10,
         queueLimit: 0
-        })
+        });
+
+        this.pool.on('connection', (connection) => {
+            const tz = this.config.get('DB_TIMEZONE') ?? 'Europe/Sarajevo';
+            connection.query(`SET time_zone = '${tz}'`);
+        });
     }
 
     async onModuleDestroy() {
