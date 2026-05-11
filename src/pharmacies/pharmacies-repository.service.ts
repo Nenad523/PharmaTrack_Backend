@@ -122,6 +122,7 @@ export class PharmaciesRepository {
                     C.name AS city,
                     P.latitude,
                     P.longitude,
+                    P.isActive,
                     ${distanceSql} AS distance
                 FROM Pharmacy P
                 JOIN City C ON C.id = P.city_id
