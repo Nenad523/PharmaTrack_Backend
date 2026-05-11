@@ -20,6 +20,104 @@ import {
 
 import { WorkingHours } from './types/workingHours.type';
 import { OnDuty } from './types/onDuty.type';
+
+const DEFAULT_AVAILABILITY_TIME_ZONE = 'Europe/Podgorica';
+const WEEKDAY_NAMES = [
+    'monday',
+    'tuesday',
+    'wednesday',
+    'thursday',
+    'friday',
+    'saturday',
+    'sunday',
+];
+const WORKING_HOURS_DAY_LABEL_SQL = `
+    CASE
+        WHEN CAST(day_of_week AS CHAR) REGEXP '^[0-9]+$'
+            THEN ELT(CAST(day_of_week AS UNSIGNED), 'Ponedjeljak', 'Utorak', 'Srijeda', 'Četvrtak', 'Petak', 'Subota', 'Nedjelja')
+        WHEN LOWER(CAST(day_of_week AS CHAR)) = 'monday' THEN 'Ponedjeljak'
+        WHEN LOWER(CAST(day_of_week AS CHAR)) = 'tuesday' THEN 'Utorak'
+        WHEN LOWER(CAST(day_of_week AS CHAR)) = 'wednesday' THEN 'Srijeda'
+        WHEN LOWER(CAST(day_of_week AS CHAR)) = 'thursday' THEN 'Četvrtak'
+        WHEN LOWER(CAST(day_of_week AS CHAR)) = 'friday' THEN 'Petak'
+        WHEN LOWER(CAST(day_of_week AS CHAR)) = 'saturday' THEN 'Subota'
+        WHEN LOWER(CAST(day_of_week AS CHAR)) = 'sunday' THEN 'Nedjelja'
+        ELSE CAST(day_of_week AS CHAR)
+    END
+`;
+const WORKING_HOURS_DAY_ORDER_SQL = `
+    CASE
+        WHEN CAST(day_of_week AS CHAR) REGEXP '^[0-9]+$'
+            THEN CAST(day_of_week AS UNSIGNED)
+        WHEN LOWER(CAST(day_of_week AS CHAR)) = 'monday' THEN 1
+        WHEN LOWER(CAST(day_of_week AS CHAR)) = 'tuesday' THEN 2
+        WHEN LOWER(CAST(day_of_week AS CHAR)) = 'wednesday' THEN 3
+        WHEN LOWER(CAST(day_of_week AS CHAR)) = 'thursday' THEN 4
+        WHEN LOWER(CAST(day_of_week AS CHAR)) = 'friday' THEN 5
+        WHEN LOWER(CAST(day_of_week AS CHAR)) = 'saturday' THEN 6
+        WHEN LOWER(CAST(day_of_week AS CHAR)) = 'sunday' THEN 7
+        ELSE 8
+    END
+`;
+
+type LocalAvailabilityClock = {
+    dateTime: string;
+    date: string;
+    time: string;
+    dayOfWeek: number;
+    dayName: string;
+};
+
+const getAvailabilityTimeZone = () =>
+    process.env.APP_TIMEZONE ??
+    process.env.DB_TIMEZONE ??
+    DEFAULT_AVAILABILITY_TIME_ZONE;
+
+const getLocalAvailabilityClock = (date = new Date()): LocalAvailabilityClock => {
+    let parts: Record<string, string>;
+
+    try {
+        parts = Object.fromEntries(
+            new Intl.DateTimeFormat('en-CA', {
+                timeZone: getAvailabilityTimeZone(),
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hourCycle: 'h23',
+            }).formatToParts(date).map((part) => [part.type, part.value]),
+        );
+    } catch {
+        parts = Object.fromEntries(
+            new Intl.DateTimeFormat('en-CA', {
+                timeZone: DEFAULT_AVAILABILITY_TIME_ZONE,
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hourCycle: 'h23',
+            }).formatToParts(date).map((part) => [part.type, part.value]),
+        );
+    }
+
+    const localDate = `${parts.year}-${parts.month}-${parts.day}`;
+    const localTime = `${parts.hour}:${parts.minute}:${parts.second}`;
+    const utcDay = new Date(`${localDate}T00:00:00Z`).getUTCDay();
+    const dayOfWeek = utcDay === 0 ? 7 : utcDay;
+
+    return {
+        dateTime: `${localDate} ${localTime}`,
+        date: localDate,
+        time: localTime,
+        dayOfWeek,
+        dayName: WEEKDAY_NAMES[dayOfWeek - 1],
+    };
+};
+
 @Injectable()
 export class PharmaciesRepository {
 
@@ -152,6 +250,7 @@ export class PharmaciesRepository {
 
             const pharmacyIds = pharmacyRows.map((pharmacy) => pharmacy.id);
             const pharmacyIdPlaceholders = pharmacyIds.map(() => '?').join(', ');
+            const availabilityClock = getLocalAvailabilityClock();
 
             // Query 2: za nadjene apoteke nalazimo njihove availability cinjenice
 
@@ -164,14 +263,14 @@ export class PharmaciesRepository {
                             SELECT MIN(DS.end_datetime)
                             FROM DutySchedule DS
                             WHERE DS.pharmacy_id = P.id
-                              AND NOW() BETWEEN DS.start_datetime AND DS.end_datetime
+                              AND ? BETWEEN DS.start_datetime AND DS.end_datetime
                         ) AS dutyEnd,
 
                         EXISTS (
                             SELECT 1
                             FROM PharmacyScheduleException PSE
                             WHERE PSE.pharmacy_id = P.id
-                              AND PSE.exception_date = CURDATE()
+                              AND PSE.exception_date = ?
                               AND PSE.is_closed = 1
                         ) AS hasClosedExceptionToday,
 
@@ -179,23 +278,52 @@ export class PharmaciesRepository {
                             SELECT MIN(PSE.close_time)
                             FROM PharmacyScheduleException PSE
                             WHERE PSE.pharmacy_id = P.id
-                              AND PSE.exception_date = CURDATE()
+                              AND PSE.exception_date = ?
                               AND PSE.is_closed = 0
-                              AND CURTIME() BETWEEN PSE.open_time AND PSE.close_time
+                              AND ? BETWEEN PSE.open_time AND PSE.close_time
                         ) AS activeExceptionClose,
 
                         (
                             SELECT MIN(WH.close_time)
                             FROM WorkingHours WH
                             WHERE WH.pharmacy_id = P.id
-                              AND WH.day_of_week = WEEKDAY(CURDATE()) + 1
-                              AND CURTIME() BETWEEN WH.open_time AND WH.close_time
-                        ) AS workingHoursClose
+                              AND (
+                                  WH.day_of_week = ?
+                                  OR LOWER(CAST(WH.day_of_week AS CHAR)) = ?
+                              )
+                              AND (
+                                  ? BETWEEN WH.open_time AND WH.close_time
+                                  OR (WH.open_time = '00:00:00' AND WH.close_time = '00:00:00')
+                              )
+                        ) AS workingHoursClose,
+
+                        EXISTS (
+                            SELECT 1
+                            FROM WorkingHours WH
+                            WHERE WH.pharmacy_id = P.id
+                              AND (
+                                  WH.day_of_week = ?
+                                  OR LOWER(CAST(WH.day_of_week AS CHAR)) = ?
+                              )
+                              AND WH.open_time = '00:00:00'
+                              AND WH.close_time = '00:00:00'
+                        ) AS isOpenAllDay
 
                     FROM Pharmacy P
                     WHERE P.id IN (${pharmacyIdPlaceholders})
                 `,
-                pharmacyIds,
+                [
+                    availabilityClock.dateTime,
+                    availabilityClock.date,
+                    availabilityClock.date,
+                    availabilityClock.time,
+                    availabilityClock.dayOfWeek,
+                    availabilityClock.dayName,
+                    availabilityClock.time,
+                    availabilityClock.dayOfWeek,
+                    availabilityClock.dayName,
+                    ...pharmacyIds,
+                ],
             );
 
             // Query 3: za nadjene apoteke ucitavamo samo trazene doze koje imaju na stanju.
@@ -242,6 +370,7 @@ export class PharmaciesRepository {
                 const dutyEnd = availability?.dutyEnd ?? null;
                 const activeExceptionClose = availability?.activeExceptionClose ?? null;
                 const workingHoursClose = availability?.workingHoursClose ?? null;
+                const isOpenAllDay = Boolean(availability?.isOpenAllDay);
                 const isOnDuty = dutyEnd !== null;
 
                 let isOpenNow = false;
@@ -261,6 +390,9 @@ export class PharmaciesRepository {
                     isOpenNow = true;
                     openUntil = activeExceptionClose;
                     availabilitySource = 'exception';
+                } else if (isOpenAllDay) {
+                    isOpenNow = true;
+                    availabilitySource = 'working_hours';
                 } else if (workingHoursClose !== null) {
                     isOpenNow = true;
                     openUntil = workingHoursClose;
@@ -310,12 +442,12 @@ export class PharmaciesRepository {
         
         const rows = await this.db.query<WorkingHours[]>(
             `SELECT
-                ELT(WH.day_of_week, 'Ponedeljak', 'Utorak', 'Srijeda', 'Četvrtak', 'Petak', 'Subota', 'Nedelja') AS day_of_week,
+                ${WORKING_HOURS_DAY_LABEL_SQL} AS day_of_week,
                 WH.open_time,
                 WH.close_time
             FROM WorkingHours WH
             WHERE WH.pharmacy_id = ?
-            ORDER BY WH.day_of_week, WH.open_time`,
+            ORDER BY ${WORKING_HOURS_DAY_ORDER_SQL}, WH.open_time`,
             [id],
         );
 
@@ -376,6 +508,7 @@ export class PharmaciesRepository {
 
     async getAboutPharmacy(id: number) {
         try {
+            const availabilityClock = getLocalAvailabilityClock();
             const pharmacyRows = await this.db.query<PharmacyDetailRow[]>(
                 `SELECT
                     P.id,
@@ -391,10 +524,10 @@ export class PharmaciesRepository {
                 JOIN City C ON C.id = P.city_id
                 LEFT JOIN DutySchedule DS
                     ON DS.pharmacy_id = P.id
-                    AND NOW() BETWEEN DS.start_datetime AND DS.end_datetime
+                    AND ? BETWEEN DS.start_datetime AND DS.end_datetime
                 WHERE P.id = ?
                 LIMIT 1`,
-                [id],
+                [availabilityClock.dateTime, id],
             );
 
             if (pharmacyRows.length === 0) {
@@ -410,12 +543,12 @@ export class PharmaciesRepository {
                 ),
                 this.db.query<WorkingHours[]>(
                     `SELECT
-                        ELT(day_of_week, 'Ponedeljak', 'Utorak', 'Srijeda', 'Četvrtak', 'Petak', 'Subota', 'Nedelja') AS day_of_week,
+                        ${WORKING_HOURS_DAY_LABEL_SQL} AS day_of_week,
                         open_time AS open_time,
                         close_time AS close_time
                     FROM WorkingHours
                     WHERE pharmacy_id = ?
-                    ORDER BY day_of_week, open_time`,
+                    ORDER BY ${WORKING_HOURS_DAY_ORDER_SQL}, open_time`,
                     [id],
                 ),
             ]);

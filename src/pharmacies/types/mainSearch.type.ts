@@ -39,6 +39,7 @@ export type PharmacyAvailabilityRow = {
     hasClosedExceptionToday: boolean;
     activeExceptionClose: string | null;
     workingHoursClose: string | null;
+    isOpenAllDay: boolean;
 };
 
 export type PharmacyDetailRow = {

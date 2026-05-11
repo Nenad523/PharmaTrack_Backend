@@ -11,11 +11,13 @@ import {
 describe('PharmaciesRepository', () => {
   let service: PharmaciesRepository;
   let databaseService: { query: jest.Mock };
+  const originalAppTimeZone = process.env.APP_TIMEZONE;
 
   beforeEach(async () => {
     databaseService = {
       query: jest.fn(),
     };
+    process.env.APP_TIMEZONE = 'UTC';
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -28,6 +30,16 @@ describe('PharmaciesRepository', () => {
     }).compile();
 
     service = module.get<PharmaciesRepository>(PharmaciesRepository);
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+
+    if (originalAppTimeZone === undefined) {
+      delete process.env.APP_TIMEZONE;
+    } else {
+      process.env.APP_TIMEZONE = originalAppTimeZone;
+    }
   });
 
   it('should be defined', () => {
@@ -54,6 +66,10 @@ describe('PharmaciesRepository', () => {
   });
 
   it('should merge availability data and apply open filters', async () => {
+    jest
+      .useFakeTimers()
+      .setSystemTime(new Date('2026-04-28T10:15:30Z').getTime());
+
     const pharmacyRows: PharmacySearchRow[] = [
       {
         id: 1,
@@ -91,6 +107,7 @@ describe('PharmaciesRepository', () => {
         hasClosedExceptionToday: false,
         activeExceptionClose: null,
         workingHoursClose: '20:00:00',
+        isOpenAllDay: false,
       },
       {
         pharmacyId: 2,
@@ -98,6 +115,7 @@ describe('PharmaciesRepository', () => {
         hasClosedExceptionToday: false,
         activeExceptionClose: '13:00:00',
         workingHoursClose: null,
+        isOpenAllDay: false,
       },
       {
         pharmacyId: 3,
@@ -105,6 +123,7 @@ describe('PharmaciesRepository', () => {
         hasClosedExceptionToday: true,
         activeExceptionClose: null,
         workingHoursClose: '18:00:00',
+        isOpenAllDay: false,
       },
     ];
 
@@ -145,5 +164,75 @@ describe('PharmaciesRepository', () => {
       availabilitySource: 'duty',
     });
     expect(response.data[0].doses).toHaveLength(1);
+    expect(databaseService.query.mock.calls[1][1]).toEqual([
+      '2026-04-28 10:15:30',
+      '2026-04-28',
+      '2026-04-28',
+      '10:15:30',
+      2,
+      'tuesday',
+      '10:15:30',
+      2,
+      'tuesday',
+      1,
+      2,
+      3,
+    ]);
+  });
+
+  it('should treat 00:00 to 00:00 working hours as open all day', async () => {
+    jest
+      .useFakeTimers()
+      .setSystemTime(new Date('2026-04-27T21:48:00Z').getTime());
+
+    const pharmacyRows: PharmacySearchRow[] = [
+      {
+        id: 1,
+        name: 'Apoteka 24h',
+        address: 'Adresa 1',
+        city: 'Berane',
+        latitude: 42.84,
+        longitude: 19.87,
+        distance: null,
+      },
+    ];
+
+    const availabilityRows: PharmacyAvailabilityRow[] = [
+      {
+        pharmacyId: 1,
+        dutyEnd: null,
+        hasClosedExceptionToday: false,
+        activeExceptionClose: null,
+        workingHoursClose: '00:00:00',
+        isOpenAllDay: true,
+      },
+    ];
+
+    const doseRows: PharmacyDoseRow[] = [
+      {
+        pharmacyId: 1,
+        doseId: 1,
+        strength: '500mg',
+        lastUpdated: '2026-04-27 10:00:00',
+      },
+    ];
+
+    databaseService.query
+      .mockResolvedValueOnce(pharmacyRows)
+      .mockResolvedValueOnce(availabilityRows)
+      .mockResolvedValueOnce(doseRows);
+
+    const response = await service.searchPharmacies({
+      doseIds: [1],
+      sort: 'az',
+    });
+
+    expect(response.data[0]).toMatchObject({
+      id: 1,
+      isOpenNow: true,
+      isOnDuty: false,
+      openUntil: null,
+      availabilitySource: 'working_hours',
+    });
   });
 });
