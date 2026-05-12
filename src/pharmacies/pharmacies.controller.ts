@@ -1,5 +1,6 @@
 import { Controller, Get, Query, Param } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiTags, ApiParam } from '@nestjs/swagger';
+import { SkipThrottle } from '@nestjs/throttler';
 import { PharmaciesService } from './pharmacies.service';
 import { SearchDto } from './dto/search-dto';
 import { ParsePositiveIntPipe } from '../common/pipes/parse-positive-int.pipe';
@@ -9,6 +10,7 @@ export class PharmaciesController {
 
     constructor(private service: PharmaciesService){}
 
+    @SkipThrottle()
     @Get('/search')
     @ApiOperation({ summary: 'Pretraga apoteka po dostupnim dozama i filterima' })
     @ApiQuery({
