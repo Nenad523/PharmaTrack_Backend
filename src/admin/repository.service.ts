@@ -75,4 +75,26 @@ export class RepositoryService {
             throw new InternalServerErrorException('Došlo je do greške pri izmjeni lijeka.');
         }
     }
+
+    async deleteMedication(id: number) {
+        try {
+            const existing = await this.db.query<{ id: number }[]>(
+                'SELECT id FROM Medication WHERE id = ? AND isActive = 1',
+                [id]
+            );
+
+            if (existing.length === 0)
+                throw new NotFoundException(`Lijek sa ID-em ${id} ne postoji.`);
+
+            await this.db.query(
+                'UPDATE Medication SET isActive = 0 WHERE id = ?',
+                [id]
+            );
+
+            return { success: true };
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške pri brisanju lijeka.');
+        }
+    }
 }

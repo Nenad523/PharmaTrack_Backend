@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { SessionGuard } from '../common/guards/session.guard';
@@ -28,5 +28,11 @@ export class AdminController {
         @Body() dto: UpdateMedicationDto,
     ) {
         return this.service.updateMedication(id, dto);
+    }
+
+    @ApiOperation({ summary: 'Brisanje lijeka' })
+    @Delete('/medications/:id')
+    async deleteMedication(@Param('id', ParsePositiveIntPipe) id: number) {
+        return this.service.deleteMedication(id);
     }
 }

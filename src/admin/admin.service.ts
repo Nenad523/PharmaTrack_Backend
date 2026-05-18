@@ -15,4 +15,8 @@ export class AdminService {
     async updateMedication(id: number, dto: UpdateMedicationDto) {
         return this.repo.updateMedication(id, dto);
     }
+
+    async deleteMedication(id: number) {
+        return this.repo.deleteMedication(id);
+    }
 }
