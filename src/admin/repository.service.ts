@@ -15,7 +15,14 @@ export class RepositoryService {
 
     async createMedication(dto: CreateMedicationDto) {
         try {
-            
+            const existing = await this.db.query<{ id: number }[]>(
+                'SELECT id FROM Medication WHERE name = ?',
+                [dto.name]
+            );
+
+            if (existing.length > 0)
+                throw new BadRequestException(`Lijek sa nazivom "${dto.name}" već postoji.`);
+
             let embedding: number[] | null = null;
 
             if (dto.description)
@@ -116,6 +123,14 @@ export class RepositoryService {
 
     async createIngredient(dto: CreateIngredientDto) {
         try {
+            const existing = await this.db.query<{ id: number }[]>(
+                'SELECT id FROM ActiveIngredient WHERE name = ?',
+                [dto.name]
+            );
+
+            if (existing.length > 0)
+                throw new BadRequestException(`Aktivna supstanca "${dto.name}" već postoji.`);
+
             const result = await this.db.query<{ insertId: number }>(
                 'INSERT INTO ActiveIngredient (name) VALUES (?)',
                 [dto.name]
@@ -176,6 +191,17 @@ export class RepositoryService {
 
             if (existing.length === 0)
                 throw new NotFoundException(`Lijek sa ID-em ${medicationId} ne postoji.`);
+
+            const strengthPlaceholders = dto.strengths.map(() => '?').join(', ');
+            const duplicates = await this.db.query<{ strength: string }[]>(
+                `SELECT strength FROM Doses WHERE medication_id = ? AND strength IN (${strengthPlaceholders}) AND isActive = 1`,
+                [medicationId, ...dto.strengths]
+            );
+
+            if (duplicates.length > 0) {
+                const names = duplicates.map((d) => d.strength).join(', ');
+                throw new BadRequestException(`Doze već postoje za ovaj lijek: ${names}.`);
+            }
 
             const placeholders = dto.strengths.map(() => '(?, ?, 1)').join(', ');
             const values = dto.strengths.flatMap((strength) => [medicationId, strength]);

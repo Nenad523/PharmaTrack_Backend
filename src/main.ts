@@ -13,6 +13,8 @@ const config = new DocumentBuilder()
   .setTitle('PharmaTrack API')
   .setDescription('API documentation')
   .setVersion('1.0')
+  .addApiKey({ type: 'apiKey', in: 'header', name: 'X-CSRF-Token' }, 'csrf-token')
+  .addSecurityRequirements('csrf-token')
   .build();
 
 const ALLOWED_HOSTS = (process.env.ALLOWED_HOSTS || 'api.pharmatrack.me')
@@ -108,7 +110,11 @@ app.use((req, res, next) => {
   app.useGlobalFilters(new GlobalExceptionFilter());
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  SwaggerModule.setup('api', app, document, {
+    swaggerOptions: {
+      withCredentials: true,
+    },
+  });
 
   await app.listen(Number(process.env.PORT) || 3001, '0.0.0.0');
 }
