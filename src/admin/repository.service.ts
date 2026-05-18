@@ -1,8 +1,10 @@
 import { BadRequestException, HttpException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { CreateMedicationDto } from './dto/create-medication.dto';
-import { EmbeddingService } from '../common/embedding/embedding.service';
 import { UpdateMedicationDto } from './dto/update-medication.dto';
+import { CreateIngredientDto } from './dto/create-ingredient.dto';
+import { LinkIngredientDto } from './dto/link-ingredient.dto';
+import { EmbeddingService } from '../common/embedding/embedding.service';
 @Injectable()
 export class RepositoryService {
 
@@ -95,6 +97,72 @@ export class RepositoryService {
         } catch (error) {
             if (error instanceof HttpException) throw error;
             throw new InternalServerErrorException('Došlo je do greške pri brisanju lijeka.');
+        }
+    }
+
+    async getAllIngredients() {
+        try {
+            const rows = await this.db.query<{ id: number; name: string }[]>(
+                'SELECT id, name FROM ActiveIngredient ORDER BY name ASC'
+            );
+
+            return { success: true, data: rows, count: rows.length };
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške pri dohvatanju supstanci.');
+        }
+    }
+
+    async createIngredient(dto: CreateIngredientDto) {
+        try {
+            const result = await this.db.query<{ insertId: number }>(
+                'INSERT INTO ActiveIngredient (name) VALUES (?)',
+                [dto.name]
+            );
+
+            return { success: true, id: result.insertId };
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške pri kreiranju supstance.');
+        }
+    }
+
+    async linkIngredients(medicationId: number, dto: LinkIngredientDto) {
+        try {
+            const existing = await this.db.query<{ id: number }[]>(
+                'SELECT id FROM Medication WHERE id = ? AND isActive = 1',
+                [medicationId]
+            );
+
+            if (existing.length === 0)
+                throw new NotFoundException(`Lijek sa ID-em ${medicationId} ne postoji.`);
+
+            const placeholders = dto.ingredientIds.map(() => '(?, ?)').join(', ');
+            const values = dto.ingredientIds.flatMap((ingId) => [medicationId, ingId]);
+
+            await this.db.query(
+                `INSERT IGNORE INTO Medication_ActiveIngredient (medication_id, activeIngredient_id) VALUES ${placeholders}`,
+                values
+            );
+
+            return { success: true };
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške pri dodavanju supstanci.');
+        }
+    }
+
+    async unlinkIngredient(medicationId: number, ingredientId: number) {
+        try {
+            await this.db.query(
+                'DELETE FROM Medication_ActiveIngredient WHERE medication_id = ? AND activeIngredient_id = ?',
+                [medicationId, ingredientId]
+            );
+
+            return { success: true };
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške pri uklanjanju supstance.');
         }
     }
 }
