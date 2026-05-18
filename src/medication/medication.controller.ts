@@ -55,4 +55,5 @@ export class MedicationController {
         return this.medicationService.getAlternatives(id);
     }
 
+    
 }
