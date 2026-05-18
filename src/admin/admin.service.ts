@@ -4,6 +4,7 @@ import { CreateMedicationDto } from './dto/create-medication.dto';
 import { UpdateMedicationDto } from './dto/update-medication.dto';
 import { CreateIngredientDto } from './dto/create-ingredient.dto';
 import { LinkIngredientDto } from './dto/link-ingredient.dto';
+import { CreateDoseDto } from './dto/create-dose.dto';
 
 @Injectable()
 export class AdminService {
@@ -36,5 +37,13 @@ export class AdminService {
 
     async unlinkIngredient(medicationId: number, ingredientId: number) {
         return this.repo.unlinkIngredient(medicationId, ingredientId);
+    }
+
+    async createDoses(medicationId: number, dto: CreateDoseDto) {
+        return this.repo.createDoses(medicationId, dto);
+    }
+
+    async deleteDose(medicationId: number, doseId: number) {
+        return this.repo.deleteDose(medicationId, doseId);
     }
 }

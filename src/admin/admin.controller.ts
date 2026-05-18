@@ -8,6 +8,7 @@ import { CreateMedicationDto } from './dto/create-medication.dto';
 import { UpdateMedicationDto } from './dto/update-medication.dto';
 import { CreateIngredientDto } from './dto/create-ingredient.dto';
 import { LinkIngredientDto } from './dto/link-ingredient.dto';
+import { CreateDoseDto } from './dto/create-dose.dto';
 import { ParsePositiveIntPipe } from '../common/pipes/parse-positive-int.pipe';
 
 @Controller('api/v1/admin')
@@ -66,5 +67,23 @@ export class AdminController {
         @Param('ingredientId', ParsePositiveIntPipe) ingredientId: number,
     ) {
         return this.service.unlinkIngredient(medicationId, ingredientId);
+    }
+
+    @ApiOperation({ summary: 'Dodavanje doza lijeku' })
+    @Post('/medications/:id/doses')
+    async createDoses(
+        @Param('id', ParsePositiveIntPipe) id: number,
+        @Body() dto: CreateDoseDto,
+    ) {
+        return this.service.createDoses(id, dto);
+    }
+
+    @ApiOperation({ summary: 'Brisanje doze lijeka' })
+    @Delete('/medications/:id/doses/:doseId')
+    async deleteDose(
+        @Param('id', ParsePositiveIntPipe) medicationId: number,
+        @Param('doseId', ParsePositiveIntPipe) doseId: number,
+    ) {
+        return this.service.deleteDose(medicationId, doseId);
     }
 }

@@ -4,6 +4,7 @@ import { CreateMedicationDto } from './dto/create-medication.dto';
 import { UpdateMedicationDto } from './dto/update-medication.dto';
 import { CreateIngredientDto } from './dto/create-ingredient.dto';
 import { LinkIngredientDto } from './dto/link-ingredient.dto';
+import { CreateDoseDto } from './dto/create-dose.dto';
 import { EmbeddingService } from '../common/embedding/embedding.service';
 @Injectable()
 export class RepositoryService {
@@ -163,6 +164,53 @@ export class RepositoryService {
         } catch (error) {
             if (error instanceof HttpException) throw error;
             throw new InternalServerErrorException('Došlo je do greške pri uklanjanju supstance.');
+        }
+    }
+
+    async createDoses(medicationId: number, dto: CreateDoseDto) {
+        try {
+            const existing = await this.db.query<{ id: number }[]>(
+                'SELECT id FROM Medication WHERE id = ? AND isActive = 1',
+                [medicationId]
+            );
+
+            if (existing.length === 0)
+                throw new NotFoundException(`Lijek sa ID-em ${medicationId} ne postoji.`);
+
+            const placeholders = dto.strengths.map(() => '(?, ?, 1)').join(', ');
+            const values = dto.strengths.flatMap((strength) => [medicationId, strength]);
+
+            await this.db.query(
+                `INSERT INTO Doses (medication_id, strength, isActive) VALUES ${placeholders}`,
+                values
+            );
+
+            return { success: true };
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške pri dodavanju doza.');
+        }
+    }
+
+    async deleteDose(medicationId: number, doseId: number) {
+        try {
+            const existing = await this.db.query<{ id: number }[]>(
+                'SELECT id FROM Doses WHERE id = ? AND medication_id = ? AND isActive = 1',
+                [doseId, medicationId]
+            );
+
+            if (existing.length === 0)
+                throw new NotFoundException(`Doza sa ID-em ${doseId} ne postoji.`);
+
+            await this.db.query(
+                'UPDATE Doses SET isActive = 0 WHERE id = ?',
+                [doseId]
+            );
+
+            return { success: true };
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške pri brisanju doze.');
         }
     }
 }
