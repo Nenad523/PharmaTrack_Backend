@@ -16,6 +16,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { CsrfMiddleware } from './common/middleware/csrf.middleware';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { EmbeddingService } from './common/embedding/embedding.service';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -34,7 +35,8 @@ import { EmbeddingService } from './common/embedding/embedding.service';
     PharmaciesModule,
     CitiesModule,
     NewsModule,
-    CloudinaryModule],
+    CloudinaryModule,
+    AdminModule],
   controllers: [AppController],
   providers: [
     AppService,
