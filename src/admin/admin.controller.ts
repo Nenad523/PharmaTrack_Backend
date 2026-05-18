@@ -6,8 +6,10 @@ import { ApiOperation } from '@nestjs/swagger';
 export class AdminController {
 
     constructor(private service: AdminService) {}
-
-    @ApiOperation({ summary : 'Kreiranje novog lijeka.'})
-    @Post('/medication')
-    async create
+    
+    @ApiOperation({ summary: 'Kreiranje novog lijeka' })
+    @Post('/medications')
+    async createMedication(@Body() dto: CreateMedicationDto) {
+        return this.service.createMedication(dto);
+    }
 }
