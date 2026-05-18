@@ -15,7 +15,7 @@ export class EmbeddingService {
     private getClient(): OpenAI {
         if (!this.apiKey) {
             throw new ServiceUnavailableException(
-                'Pretraga po simptomu nije dostupna jer OPENAI_API_KEY nije podeÅ¡en.',
+                'Pretraga po simptomu nije dostupna jer OPENAI_API_KEY nije podesen.',
             );
         }
 
