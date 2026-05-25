@@ -499,7 +499,7 @@ export class RepositoryService {
             );
 
             return { success: true, id: result.insertId };
-            
+
         } catch (error) {
             if (error instanceof HttpException) throw error;
             throw new InternalServerErrorException('Došlo je do greške pri dodavanju izuzetka rasporeda.');
@@ -507,7 +507,40 @@ export class RepositoryService {
     }
 
     async updateScheduleException(pharmacyId: number, exId: number, dto: UpdateScheduleExceptionDto) {
-        throw new Error('Not implemented');
+        try {
+            const existing = await this.db.query<{ id: number }[]>(
+                'SELECT id FROM PrimaryScheduleException WHERE id = ? AND pharmacy_id = ?',
+                [exId, pharmacyId]
+            );
+
+            if (existing.length === 0)
+                throw new NotFoundException(`Izuzetak sa ID-em ${exId} ne postoji.`);
+
+            const fields: string[] = [];
+            const values: (string | number | boolean | null)[] = [];
+
+            if (dto.exception_date !== undefined) { fields.push('exception_date = ?'); values.push(dto.exception_date); }
+            if (dto.name !== undefined) { fields.push('name = ?'); values.push(dto.name); }
+            if (dto.open_time !== undefined) { fields.push('open_time = ?'); values.push(dto.open_time); }
+            if (dto.close_time !== undefined) { fields.push('close_time = ?'); values.push(dto.close_time); }
+            if (dto.is_closed !== undefined) { fields.push('is_closed = ?'); values.push(dto.is_closed); }
+            if (dto.reason !== undefined) { fields.push('reason = ?'); values.push(dto.reason); }
+
+            if (fields.length === 0)
+                throw new BadRequestException('Nisu proslijeđena polja za izmjenu.');
+
+            values.push(exId);
+
+            await this.db.query(
+                `UPDATE PrimaryScheduleException SET ${fields.join(', ')} WHERE id = ?`,
+                values
+            );
+
+            return { success: true };
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške pri izmjeni izuzetka rasporeda.');
+        }
     }
 
     async removeScheduleException(pharmacyId: number, exId: number) {
