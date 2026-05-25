@@ -544,6 +544,24 @@ export class RepositoryService {
     }
 
     async removeScheduleException(pharmacyId: number, exId: number) {
-        throw new Error('Not implemented');
+        try {
+            const existing = await this.db.query<{ id: number }[]>(
+                'SELECT id FROM PrimaryScheduleException WHERE id = ? AND pharmacy_id = ?',
+                [exId, pharmacyId]
+            );
+
+            if (existing.length === 0)
+                throw new NotFoundException(`Izuzetak sa ID-em ${exId} ne postoji.`);
+
+            await this.db.query(
+                'DELETE FROM PrimaryScheduleException WHERE id = ?',
+                [exId]
+            );
+
+            return { success: true };
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške pri uklanjanju izuzetka rasporeda.');
+        }
     }
 }
