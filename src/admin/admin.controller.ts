@@ -136,7 +136,7 @@ export class AdminController {
         @Param('whId', ParsePositiveIntPipe) whId: number,
         @Body() dto: UpdateWorkingHoursDto
     ) {
-        return this.service.updateWorkingHours(id, dto);
+        return this.service.updateWorkingHours(id, whId, dto);
     }
 
     @ApiOperation({ summary : 'Uklanjanje radnog vremena apoteke'})
@@ -145,7 +145,7 @@ export class AdminController {
         @Param('id', ParsePositiveIntPipe) id: number,
         @Param('whId', ParsePositiveIntPipe) whId: number,
     ) {
-        return this.service.removeWorkingHours(id);
+        return this.service.removeWorkingHours(id, whId);
     }
 
     @ApiOperation({ summary: 'Dodavanje dežurstva apoteke' })

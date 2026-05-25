@@ -70,12 +70,12 @@ export class AdminService {
         return this.repo.createWorkingHours(id, dto);
     }
 
-    async updateWorkingHours(id: number, dto: UpdateWorkingHoursDto) {
-        return this.repo.updateWorkingHours(id, dto);
+    async updateWorkingHours(id: number, whId: number, dto: UpdateWorkingHoursDto) {
+        return this.repo.updateWorkingHours(id, whId, dto);
     }
 
-    async removeWorkingHours(id: number) {
-        return this.repo.removeWorkingHours(id);
+    async removeWorkingHours(id: number, whId: number) {
+        return this.repo.removeWorkingHours(id, whId);
     }
 
     async createDuty(id: number, dto: CreateDutyDto) {

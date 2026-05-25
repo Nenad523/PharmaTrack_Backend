@@ -350,12 +350,71 @@ export class RepositoryService {
         }
     }
 
-    async updateWorkingHours(id: number, dto: UpdateWorkingHoursDto) {
-        throw new Error('Not implemented');
+    async updateWorkingHours(pharmacyId: number, whId: number, dto: UpdateWorkingHoursDto) {
+        try {
+
+            const existing = await this.db.query<{ id: number }[]>(
+                'SELECT id FROM WorkingHours WHERE id = ? AND pharmacy_id = ?',
+                [whId, pharmacyId]
+            );
+
+            if (existing.length === 0)
+                throw new NotFoundException(`Radno vrijeme sa ID-em ${whId} ne postoji.`);
+
+            const fields: string[] = [];
+            const values: (string | number | null)[] = [];
+
+            if (dto.day_of_week !== undefined) {
+                fields.push('day_of_week = ?');
+                values.push(dto.day_of_week);
+            }
+            if (dto.open_time !== undefined) {
+                fields.push('open_time = ?');
+                values.push(dto.open_time);
+            }
+            if (dto.close_time !== undefined) {
+                fields.push('close_time = ?');
+                values.push(dto.close_time);
+            }
+
+            if (fields.length === 0)
+                throw new BadRequestException('Nisu proslijeđena polja za izmjenu.');
+
+            values.push(whId);
+
+            await this.db.query(
+                `UPDATE WorkingHours SET ${fields.join(', ')} WHERE id = ?`,
+                values
+            );
+
+            return { success: true };
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške pri izmjeni radnog vremena.');
+        }
     }
 
-    async removeWorkingHours(id: number) {
-        throw new Error('Not implemented');
+    async removeWorkingHours(pharmacyId: number, whId: number) {
+        try {
+            const existing = await this.db.query<{ id: number }[]>(
+                'SELECT id FROM WorkingHours WHERE id = ? AND pharmacy_id = ?',
+                [whId, pharmacyId]
+            );
+
+            if (existing.length === 0)
+                throw new NotFoundException(`Radno vrijeme sa ID-em ${whId} ne postoji.`);
+
+            await this.db.query(
+                'DELETE FROM WorkingHours WHERE id = ?',
+                [whId]
+            );
+
+            return { success: true };
+            
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške pri uklanjanju radnog vremena.');
+        }
     }
 
     async createDuty(pharmacyId: number, dto: CreateDutyDto) {
