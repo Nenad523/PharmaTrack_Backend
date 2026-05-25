@@ -5,7 +5,15 @@ import { UpdateMedicationDto } from './dto/update-medication.dto';
 import { CreateIngredientDto } from './dto/create-ingredient.dto';
 import { LinkIngredientDto } from './dto/link-ingredient.dto';
 import { CreateDoseDto } from './dto/create-dose.dto';
+import { CreatePharmacyDto } from './dto/create-pharmacy.dto';
+import { UpdatePharmacyDto } from './dto/update-pharmacy.dto';
+import { CreateWorkingHoursDto } from './dto/create-workingHours.dto';
+import { UpdateWorkingHoursDto } from './dto/update-workingHours.dto';
+import { CreateDutyDto } from './dto/create-duty.dto';
+import { CreateScheduleExceptionDto } from './dto/create-scheduleException.dto';
+import { UpdateScheduleExceptionDto } from './dto/update-scheduleException.dto';
 import { EmbeddingService } from '../common/embedding/embedding.service';
+import { ResultSetHeader } from 'mysql2';
 @Injectable()
 export class RepositoryService {
 
@@ -237,6 +245,323 @@ export class RepositoryService {
         } catch (error) {
             if (error instanceof HttpException) throw error;
             throw new InternalServerErrorException('Došlo je do greške pri brisanju doze.');
+        }
+    }
+
+    async createPharmacy(dto: CreatePharmacyDto) {
+        try {
+            const existing = await this.db.query<any[]>(
+                'SELECT id FROM Pharmacy WHERE name = ? AND address = ? AND isActive = 1',
+                [dto.name, dto.address]
+            );
+
+            if (existing.length > 0) {
+                throw new BadRequestException('Apoteka sa ovim nazivom i adresom već postoji');
+            }
+
+            const result = await this.db.query<ResultSetHeader>(
+                'INSERT INTO Pharmacy (name, address, latitude, longitude, city_id, isActive) VALUES (?, ?, ?, ?, ?, 1)',
+                [dto.name, dto.address, dto.latitude, dto.longitude, dto.city_id]
+            );
+            return { success: true, id: result.insertId };
+
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške pri kreiranju apoteke.');
+        }
+    }
+
+    async updatePharmacy(id: number, dto: UpdatePharmacyDto) {
+        try {
+            const result = await this.db.query<ResultSetHeader>(
+                `UPDATE Pharmacy SET
+                name = COALESCE(?, name),
+                address = COALESCE(?, address),
+                latitude = COALESCE(?, latitude),
+                longitude = COALESCE(?, longitude),
+                city_id = COALESCE(?, city_id)
+                WHERE id = ?`,
+                [dto.name ?? null, dto.address ?? null, dto.latitude ?? null, dto.longitude ?? null, dto.city_id ?? null, id]
+            );
+
+            if (result.affectedRows === 0)
+                throw new NotFoundException(`Apoteka sa ID-em ${id} ne postoji.`);
+            return { success: true };
+
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške pri izmjeni apoteke.');
+        }
+    }
+
+    async removePharmacy(id: number) {
+        try {
+
+            const existing = await this.db.query<{ id: number }[]>(
+                'SELECT id FROM Pharmacy WHERE id = ? AND isActive = 1',
+                [id]
+            );
+
+            if (existing.length === 0)
+                throw new NotFoundException(`Apoteka sa ID-em ${id} ne postoji.`);
+
+            await this.db.query(
+                'UPDATE Pharmacy SET isActive = 0 WHERE id = ?',
+                [id]
+            );
+
+            return { success: true };
+
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške pri uklanjanju apoteke.');
+        }
+    }
+
+    async createWorkingHours(pharmacyId: number, dto: CreateWorkingHoursDto) {
+        try {
+
+            const pharmacy = await this.db.query<{ id: number }[]>(
+                'SELECT id FROM Pharmacy WHERE id = ? AND isActive = 1',
+                [pharmacyId]
+            );
+
+            if (pharmacy.length === 0)
+                throw new NotFoundException(`Apoteka sa ID-em ${pharmacyId} ne postoji.`);
+
+            const existing = await this.db.query<{ id: number }[]>(
+                'SELECT id FROM WorkingHours WHERE pharmacy_id = ? AND day_of_week = ?',
+                [pharmacyId, dto.day_of_week]
+            );
+
+            if (existing.length > 0)
+                throw new BadRequestException(`Radno vrijeme za ${dto.day_of_week} već postoji.`);
+
+            const result = await this.db.query<ResultSetHeader>(
+                'INSERT INTO WorkingHours (day_of_week, open_time, close_time,pharmacy_id) VALUES (?, ?, ?, ?)',
+                [dto.day_of_week, dto.open_time, dto.close_time, pharmacyId]
+            );
+
+            return { success: true, id: result.insertId };
+
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške pri dodavanju radnog vremena.');
+        }
+    }
+
+    async updateWorkingHours(pharmacyId: number, whId: number, dto: UpdateWorkingHoursDto) {
+        try {
+
+            const existing = await this.db.query<{ id: number }[]>(
+                'SELECT id FROM WorkingHours WHERE id = ? AND pharmacy_id = ?',
+                [whId, pharmacyId]
+            );
+
+            if (existing.length === 0)
+                throw new NotFoundException(`Radno vrijeme sa ID-em ${whId} ne postoji.`);
+
+            const fields: string[] = [];
+            const values: (string | number | null)[] = [];
+
+            if (dto.day_of_week !== undefined) {
+                fields.push('day_of_week = ?');
+                values.push(dto.day_of_week);
+            }
+            if (dto.open_time !== undefined) {
+                fields.push('open_time = ?');
+                values.push(dto.open_time);
+            }
+            if (dto.close_time !== undefined) {
+                fields.push('close_time = ?');
+                values.push(dto.close_time);
+            }
+
+            if (fields.length === 0)
+                throw new BadRequestException('Nisu proslijeđena polja za izmjenu.');
+
+            values.push(whId);
+
+            await this.db.query(
+                `UPDATE WorkingHours SET ${fields.join(', ')} WHERE id = ?`,
+                values
+            );
+
+            return { success: true };
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške pri izmjeni radnog vremena.');
+        }
+    }
+
+    async removeWorkingHours(pharmacyId: number, whId: number) {
+        try {
+            const existing = await this.db.query<{ id: number }[]>(
+                'SELECT id FROM WorkingHours WHERE id = ? AND pharmacy_id = ?',
+                [whId, pharmacyId]
+            );
+
+            if (existing.length === 0)
+                throw new NotFoundException(`Radno vrijeme sa ID-em ${whId} ne postoji.`);
+
+            await this.db.query(
+                'DELETE FROM WorkingHours WHERE id = ?',
+                [whId]
+            );
+
+            return { success: true };
+
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške pri uklanjanju radnog vremena.');
+        }
+    }
+
+    async createDuty(pharmacyId: number, dto: CreateDutyDto) {
+        try {
+            const pharmacy = await this.db.query<{ id: number }[]>(
+                'SELECT id FROM Pharmacy WHERE id = ? AND isActive = 1',
+                [pharmacyId]
+            );
+
+            if (pharmacy.length === 0)
+                throw new NotFoundException(`Apoteka sa ID-em ${pharmacyId} ne postoji.`);
+
+            const overlap = await this.db.query<{ id: number }[]>(
+                `SELECT id FROM DutySchedule
+                WHERE pharmacy_id = ?
+                AND start_datetime < ? AND end_datetime > ?`,
+                [pharmacyId, dto.end_datetime, dto.start_datetime]
+            );
+
+            if (overlap.length > 0)
+                throw new BadRequestException('Dežurstvo se preklapa sa postojećim dežurstvom.');
+
+            const result = await this.db.query<ResultSetHeader>(
+                'INSERT INTO DutySchedule (start_datetime, end_datetime, pharmacy_id) VALUES (?, ?, ?)',
+                [dto.start_datetime, dto.end_datetime, pharmacyId]
+            );
+
+            return { success: true, id: result.insertId };
+
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške pri dodavanju dežurstva.');
+        }
+    }
+
+    async removeDuty(pharmacyId: number, dutyId: number) {
+        try {
+
+            const existing = await this.db.query<{ id: number }[]>(
+                'SELECT id FROM DutySchedule WHERE id = ? AND pharmacy_id = ?',
+                [dutyId, pharmacyId]
+            );
+
+            if (existing.length === 0)
+                throw new NotFoundException(`Dežurstvo sa ID-em ${dutyId} ne postoji.`);
+
+            await this.db.query(
+                'DELETE FROM DutySchedule WHERE id = ?',
+                [dutyId]
+            );
+
+            return { success: true };
+
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške pri uklanjanju dežurstva.');
+        }
+    }
+
+    async createScheduleException(pharmacyId: number, dto: CreateScheduleExceptionDto) {
+        try {
+            const pharmacy = await this.db.query<{ id: number }[]>(
+                'SELECT id FROM Pharmacy WHERE id = ? AND isActive = 1',
+                [pharmacyId]
+            );
+
+            if (pharmacy.length === 0)
+                throw new NotFoundException(`Apoteka sa ID-em ${pharmacyId} ne postoji.`);
+
+            const existing = await this.db.query<{ id: number }[]>(
+                'SELECT id FROM PharmacyScheduleException WHERE pharmacy_id = ? AND exception_date = ?',
+                [pharmacyId, dto.exception_date]
+            );
+
+            if (existing.length > 0)
+                throw new BadRequestException(`Izuzetak za datum ${dto.exception_date} već postoji.`);
+
+            const result = await this.db.query<ResultSetHeader>(
+                `INSERT INTO PharmacyScheduleException ( exception_date, name, open_time, close_time, is_closed, reason, pharmacy_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                [pharmacyId, dto.exception_date, dto.name, dto.open_time ?? null, dto.close_time ?? null, dto.is_closed, dto.reason]
+            );
+
+            return { success: true, id: result.insertId };
+
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške pri dodavanju izuzetka rasporeda.');
+        }
+    }
+
+    async updateScheduleException(pharmacyId: number, exId: number, dto: UpdateScheduleExceptionDto) {
+        try {
+            const existing = await this.db.query<{ id: number }[]>(
+                'SELECT id FROM PrimaryScheduleException WHERE id = ? AND pharmacy_id = ?',
+                [exId, pharmacyId]
+            );
+
+            if (existing.length === 0)
+                throw new NotFoundException(`Izuzetak sa ID-em ${exId} ne postoji.`);
+
+            const fields: string[] = [];
+            const values: (string | number | boolean | null)[] = [];
+
+            if (dto.exception_date !== undefined) { fields.push('exception_date = ?'); values.push(dto.exception_date); }
+            if (dto.name !== undefined) { fields.push('name = ?'); values.push(dto.name); }
+            if (dto.open_time !== undefined) { fields.push('open_time = ?'); values.push(dto.open_time); }
+            if (dto.close_time !== undefined) { fields.push('close_time = ?'); values.push(dto.close_time); }
+            if (dto.is_closed !== undefined) { fields.push('is_closed = ?'); values.push(dto.is_closed); }
+            if (dto.reason !== undefined) { fields.push('reason = ?'); values.push(dto.reason); }
+
+            if (fields.length === 0)
+                throw new BadRequestException('Nisu proslijeđena polja za izmjenu.');
+
+            values.push(exId);
+
+            await this.db.query(
+                `UPDATE PrimaryScheduleException SET ${fields.join(', ')} WHERE id = ?`,
+                values
+            );
+
+            return { success: true };
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške pri izmjeni izuzetka rasporeda.');
+        }
+    }
+
+    async removeScheduleException(pharmacyId: number, exId: number) {
+        try {
+            const existing = await this.db.query<{ id: number }[]>(
+                'SELECT id FROM PrimaryScheduleException WHERE id = ? AND pharmacy_id = ?',
+                [exId, pharmacyId]
+            );
+
+            if (existing.length === 0)
+                throw new NotFoundException(`Izuzetak sa ID-em ${exId} ne postoji.`);
+
+            await this.db.query(
+                'DELETE FROM PrimaryScheduleException WHERE id = ?',
+                [exId]
+            );
+
+            return { success: true };
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške pri uklanjanju izuzetka rasporeda.');
         }
     }
 }
