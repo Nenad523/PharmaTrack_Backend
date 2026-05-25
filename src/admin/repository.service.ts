@@ -319,7 +319,35 @@ export class RepositoryService {
     }
 
     async createWorkingHours(pharmacyId: number, dto: CreateWorkingHoursDto) {
-        throw new Error('Not implemented');
+        try {
+
+            const pharmacy = await this.db.query<{ id: number }[]>(
+                'SELECT id FROM Pharmacy WHERE id = ? AND isActive = 1',
+                [pharmacyId]
+            );
+
+            if (pharmacy.length === 0)
+                throw new NotFoundException(`Apoteka sa ID-em ${pharmacyId} ne postoji.`);
+
+            const existing = await this.db.query<{ id: number }[]>(
+                'SELECT id FROM WorkingHours WHERE pharmacy_id = ? AND day_of_week = ?',
+                [pharmacyId, dto.day_of_week]
+            );
+
+            if (existing.length > 0)
+                throw new BadRequestException(`Radno vrijeme za ${dto.day_of_week} već postoji.`);
+
+            const result = await this.db.query<ResultSetHeader>(
+                'INSERT INTO WorkingHours (day_of_week, open_time, close_time,pharmacy_id) VALUES (?, ?, ?, ?)',
+                [dto.day_of_week, dto.open_time, dto.close_time, pharmacyId]
+            );
+
+            return { success: true, id: result.insertId };
+
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške pri dodavanju radnog vremena.');
+        }
     }
 
     async updateWorkingHours(id: number, dto: UpdateWorkingHoursDto) {
