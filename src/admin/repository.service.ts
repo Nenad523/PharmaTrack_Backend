@@ -13,6 +13,7 @@ import { CreateDutyDto } from './dto/create-duty.dto';
 import { CreateScheduleExceptionDto } from './dto/create-scheduleException.dto';
 import { UpdateScheduleExceptionDto } from './dto/update-scheduleException.dto';
 import { EmbeddingService } from '../common/embedding/embedding.service';
+import { ResultSetHeader } from 'mysql2';
 @Injectable()
 export class RepositoryService {
 
@@ -248,7 +249,17 @@ export class RepositoryService {
     }
 
     async createPharmacy(dto: CreatePharmacyDto) {
-        throw new Error('Not implemented');
+        
+        const result = await this.db.query<ResultSetHeader>(
+            'INSERT INTO Pharmacy (name, address, latitude, longitude, city_id) VALUES (?, ?, ?, ?, ?)',
+            [dto.name, dto.address, dto.latitude, dto.longitude, dto.city_id]
+        );
+
+        if (result.affectedRows === 0) {
+            throw new Error('Apoteka nije kreirana');
+        }
+
+        return { id: result.insertId, ...dto };
     }
 
     async updatePharmacy(id: number, dto: UpdatePharmacyDto) {
