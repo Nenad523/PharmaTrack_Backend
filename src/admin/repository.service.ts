@@ -273,7 +273,7 @@ export class RepositoryService {
                 WHERE id = ?`,
                 [dto.name ?? null, dto.address ?? null, dto.latitude ?? null, dto.longitude ?? null, dto.city_id ?? null, id]
             );
-            
+
             if (result.affectedRows === 0)
                 throw new NotFoundException(`Apoteka sa ID-em ${id} ne postoji.`);
             return { success: true };
@@ -285,7 +285,27 @@ export class RepositoryService {
     }
 
     async removePharmacy(id: number) {
-        throw new Error('Not implemented');
+        try {
+            
+            const existing = await this.db.query<{ id: number }[]>(
+                'SELECT id FROM Pharmacy WHERE id = ? AND isActive = 1',
+                [id]
+            );
+
+            if (existing.length === 0)
+                throw new NotFoundException(`Apoteka sa ID-em ${id} ne postoji.`);
+
+            await this.db.query(
+                'UPDATE Pharmacy SET isActive = 0 WHERE id = ?',
+                [id]
+            );
+
+            return { success: true };
+
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške pri uklanjanju apoteke.');
+        }
     }
 
     async createWorkingHours(pharmacyId: number, dto: CreateWorkingHoursDto) {
