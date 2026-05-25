@@ -5,6 +5,13 @@ import { UpdateMedicationDto } from './dto/update-medication.dto';
 import { CreateIngredientDto } from './dto/create-ingredient.dto';
 import { LinkIngredientDto } from './dto/link-ingredient.dto';
 import { CreateDoseDto } from './dto/create-dose.dto';
+import { CreatePharmacyDto } from './dto/create-pharmacy.dto';
+import { UpdatePharmacyDto } from './dto/update-pharmacy.dto';
+import { CreateWorkingHoursDto } from './dto/create-workingHours.dto';
+import { UpdateWorkingHoursDto } from './dto/update-workingHours.dto';
+import { CreateDutyDto } from './dto/create-duty.dto';
+import { CreateScheduleExceptionDto } from './dto/create-scheduleException.dto';
+import { UpdateScheduleExceptionDto } from './dto/update-scheduleException.dto';
 
 @Injectable()
 export class AdminService {
@@ -45,5 +52,49 @@ export class AdminService {
 
     async deleteDose(medicationId: number, doseId: number) {
         return this.repo.deleteDose(medicationId, doseId);
+    }
+
+    async createPharmacy(dto: CreatePharmacyDto) {
+        return this.repo.createPharmacy(dto);
+    }
+
+    async updatePharmacy(id: number, dto: UpdatePharmacyDto) {
+        return this.repo.updatePharmacy(id, dto);
+    }
+
+    async removePharmacy(id: number) {
+        return this.repo.removePharmacy(id);
+    }
+
+    async createWorkingHours(id: number, dto: CreateWorkingHoursDto) {
+        return this.repo.createWorkingHours(id, dto);
+    }
+
+    async updateWorkingHours(id: number, dto: UpdateWorkingHoursDto) {
+        return this.repo.updateWorkingHours(id, dto);
+    }
+
+    async removeWorkingHours(id: number) {
+        return this.repo.removeWorkingHours(id);
+    }
+
+    async createDuty(id: number, dto: CreateDutyDto) {
+        return this.repo.createDuty(id, dto);
+    }
+
+    async removeDuty(id: number, dutyId: number) {
+        return this.repo.removeDuty(id, dutyId);
+    }
+
+    async createScheduleException(id: number, dto: CreateScheduleExceptionDto) {
+        return this.repo.createScheduleException(id, dto);
+    }
+
+    async updateScheduleException(id: number, exId: number, dto: UpdateScheduleExceptionDto) {
+        return this.repo.updateScheduleException(id, exId, dto);
+    }
+
+    async removeScheduleException(id: number, exId: number) {
+        return this.repo.removeScheduleException(id, exId);
     }
 }

@@ -15,7 +15,7 @@ import { UpdatePharmacyDto } from './dto/update-pharmacy.dto';
 import { CreateWorkingHoursDto } from './dto/create-workingHours.dto';
 import { UpdateWorkingHoursDto } from './dto/update-workingHours.dto';
 import { CreateDutyDto } from './dto/create-duty.dto';
-import { CreateScheduleException, CreateScheduleExceptionDto } from './dto/create-scheduleException.dto';
+import { CreateScheduleExceptionDto } from './dto/create-scheduleException.dto';
 import { UpdateScheduleExceptionDto } from './dto/update-scheduleException.dto';
 @Controller('api/v1/admin')
 @UseGuards(SessionGuard, RolesGuard)

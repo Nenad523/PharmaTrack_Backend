@@ -5,6 +5,13 @@ import { UpdateMedicationDto } from './dto/update-medication.dto';
 import { CreateIngredientDto } from './dto/create-ingredient.dto';
 import { LinkIngredientDto } from './dto/link-ingredient.dto';
 import { CreateDoseDto } from './dto/create-dose.dto';
+import { CreatePharmacyDto } from './dto/create-pharmacy.dto';
+import { UpdatePharmacyDto } from './dto/update-pharmacy.dto';
+import { CreateWorkingHoursDto } from './dto/create-workingHours.dto';
+import { UpdateWorkingHoursDto } from './dto/update-workingHours.dto';
+import { CreateDutyDto } from './dto/create-duty.dto';
+import { CreateScheduleExceptionDto } from './dto/create-scheduleException.dto';
+import { UpdateScheduleExceptionDto } from './dto/update-scheduleException.dto';
 import { EmbeddingService } from '../common/embedding/embedding.service';
 @Injectable()
 export class RepositoryService {
@@ -238,5 +245,49 @@ export class RepositoryService {
             if (error instanceof HttpException) throw error;
             throw new InternalServerErrorException('Došlo je do greške pri brisanju doze.');
         }
+    }
+
+    async createPharmacy(dto: CreatePharmacyDto) {
+        throw new Error('Not implemented');
+    }
+
+    async updatePharmacy(id: number, dto: UpdatePharmacyDto) {
+        throw new Error('Not implemented');
+    }
+
+    async removePharmacy(id: number) {
+        throw new Error('Not implemented');
+    }
+
+    async createWorkingHours(pharmacyId: number, dto: CreateWorkingHoursDto) {
+        throw new Error('Not implemented');
+    }
+
+    async updateWorkingHours(id: number, dto: UpdateWorkingHoursDto) {
+        throw new Error('Not implemented');
+    }
+
+    async removeWorkingHours(id: number) {
+        throw new Error('Not implemented');
+    }
+
+    async createDuty(pharmacyId: number, dto: CreateDutyDto) {
+        throw new Error('Not implemented');
+    }
+
+    async removeDuty(pharmacyId: number, dutyId: number) {
+        throw new Error('Not implemented');
+    }
+
+    async createScheduleException(pharmacyId: number, dto: CreateScheduleExceptionDto) {
+        throw new Error('Not implemented');
+    }
+
+    async updateScheduleException(pharmacyId: number, exId: number, dto: UpdateScheduleExceptionDto) {
+        throw new Error('Not implemented');
+    }
+
+    async removeScheduleException(pharmacyId: number, exId: number) {
+        throw new Error('Not implemented');
     }
 }
