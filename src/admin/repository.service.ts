@@ -249,7 +249,7 @@ export class RepositoryService {
     }
 
     async createPharmacy(dto: CreatePharmacyDto) {
-        
+
         const result = await this.db.query<ResultSetHeader>(
             'INSERT INTO Pharmacy (name, address, latitude, longitude, city_id) VALUES (?, ?, ?, ?, ?)',
             [dto.name, dto.address, dto.latitude, dto.longitude, dto.city_id]
@@ -263,7 +263,18 @@ export class RepositoryService {
     }
 
     async updatePharmacy(id: number, dto: UpdatePharmacyDto) {
-        throw new Error('Not implemented');
+        const result = await this.db.query<ResultSetHeader>(
+            `UPDATE Pharmacy SET 
+            name = COALESCE(?, name),
+            address = COALESCE(?, address),
+            latitude = COALESCE(?, latitude),
+            longitude = COALESCE(?, longitude),
+            city_id = COALESCE(?, city_id)
+            WHERE id = ?`,
+            [dto.name ?? null, dto.address ?? null, dto.latitude ?? null, dto.longitude ?? null, dto.city_id ?? null, id]
+        );
+
+        return result.affectedRows > 0;
     }
 
     async removePharmacy(id: number) {
