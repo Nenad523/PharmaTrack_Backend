@@ -1,7 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsBoolean, IsOptional, IsString, Matches, IsIn } from "class-validator";
 
-export class CreateScheduleException {
+export class CreateScheduleExceptionDto {
 
     @ApiProperty({ example: '2026-01-01'})
     @IsString()

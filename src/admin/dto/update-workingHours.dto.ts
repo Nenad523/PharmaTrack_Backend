@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsIn, IsOptional, IsString, Matches } from "class-validator";
 
-export class CreateWorkingHoursDto {
+export class UpdateWorkingHoursDto {
     
   @ApiProperty({ example: 'Monday' })
   @IsOptional()
