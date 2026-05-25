@@ -443,7 +443,7 @@ export class RepositoryService {
             );
 
             return { success: true, id: result.insertId };
-            
+
         } catch (error) {
             if (error instanceof HttpException) throw error;
             throw new InternalServerErrorException('Došlo je do greške pri dodavanju dežurstva.');
@@ -451,7 +451,27 @@ export class RepositoryService {
     }
 
     async removeDuty(pharmacyId: number, dutyId: number) {
-        throw new Error('Not implemented');
+        try {
+            
+            const existing = await this.db.query<{ id: number }[]>(
+                'SELECT id FROM DutySchedule WHERE id = ? AND pharmacy_id = ?',
+                [dutyId, pharmacyId]
+            );
+
+            if (existing.length === 0)
+                throw new NotFoundException(`Dežurstvo sa ID-em ${dutyId} ne postoji.`);
+
+            await this.db.query(
+                'DELETE FROM DutySchedule WHERE id = ?',
+                [dutyId]
+            );
+
+            return { success: true };
+
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške pri uklanjanju dežurstva.');
+        }
     }
 
     async createScheduleException(pharmacyId: number, dto: CreateScheduleExceptionDto) {
