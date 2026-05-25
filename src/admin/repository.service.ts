@@ -249,32 +249,39 @@ export class RepositoryService {
     }
 
     async createPharmacy(dto: CreatePharmacyDto) {
-
-        const result = await this.db.query<ResultSetHeader>(
-            'INSERT INTO Pharmacy (name, address, latitude, longitude, city_id) VALUES (?, ?, ?, ?, ?)',
-            [dto.name, dto.address, dto.latitude, dto.longitude, dto.city_id]
-        );
-
-        if (result.affectedRows === 0) {
-            throw new Error('Apoteka nije kreirana');
+        try {
+            const result = await this.db.query<ResultSetHeader>(
+                'INSERT INTO Pharmacy (name, address, latitude, longitude, city_id) VALUES (?, ?, ?, ?, ?)',
+                [dto.name, dto.address, dto.latitude, dto.longitude, dto.city_id]
+            );
+            return { success: true, id: result.insertId };
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške pri kreiranju apoteke.');
         }
-
-        return { id: result.insertId, ...dto };
     }
 
     async updatePharmacy(id: number, dto: UpdatePharmacyDto) {
-        const result = await this.db.query<ResultSetHeader>(
-            `UPDATE Pharmacy SET 
-            name = COALESCE(?, name),
-            address = COALESCE(?, address),
-            latitude = COALESCE(?, latitude),
-            longitude = COALESCE(?, longitude),
-            city_id = COALESCE(?, city_id)
-            WHERE id = ?`,
-            [dto.name ?? null, dto.address ?? null, dto.latitude ?? null, dto.longitude ?? null, dto.city_id ?? null, id]
-        );
+        try {
+            const result = await this.db.query<ResultSetHeader>(
+                `UPDATE Pharmacy SET
+                name = COALESCE(?, name),
+                address = COALESCE(?, address),
+                latitude = COALESCE(?, latitude),
+                longitude = COALESCE(?, longitude),
+                city_id = COALESCE(?, city_id)
+                WHERE id = ?`,
+                [dto.name ?? null, dto.address ?? null, dto.latitude ?? null, dto.longitude ?? null, dto.city_id ?? null, id]
+            );
+            
+            if (result.affectedRows === 0)
+                throw new NotFoundException(`Apoteka sa ID-em ${id} ne postoji.`);
+            return { success: true };
 
-        return result.affectedRows > 0;
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške pri izmjeni apoteke.');
+        }
     }
 
     async removePharmacy(id: number) {
