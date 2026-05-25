@@ -97,4 +97,24 @@ export class AdminService {
     async removeScheduleException(id: number, exId: number) {
         return this.repo.removeScheduleException(id, exId);
     }
+
+    async searchPharmaciesAdmin(name: string) {
+        return this.repo.searchPharmaciesAdmin(name);
+    }
+
+    async getPharmacyAdminById(id: number) {
+        return this.repo.getPharmacyAdminById(id);
+    }
+
+    async getPharmacyWorkingHoursAdmin(pharmacyId: number) {
+        return this.repo.getPharmacyWorkingHoursAdmin(pharmacyId);
+    }
+
+    async getPharmacyDutyAdmin(pharmacyId: number) {
+        return this.repo.getPharmacyDutyAdmin(pharmacyId);
+    }
+
+    async getPharmacyScheduleExceptionsAdmin(pharmacyId: number) {
+        return this.repo.getPharmacyScheduleExceptionsAdmin(pharmacyId);
+    }
 }
