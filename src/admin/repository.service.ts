@@ -250,11 +250,21 @@ export class RepositoryService {
 
     async createPharmacy(dto: CreatePharmacyDto) {
         try {
+            const existing = await this.db.query<any[]>(
+                'SELECT id FROM Pharmacy WHERE name = ? AND address = ? AND isActive = 1',
+                [dto.name, dto.address]
+            );
+
+            if (existing.length > 0) {
+                throw new BadRequestException('Apoteka sa ovim nazivom i adresom već postoji');
+            }
+
             const result = await this.db.query<ResultSetHeader>(
-                'INSERT INTO Pharmacy (name, address, latitude, longitude, city_id) VALUES (?, ?, ?, ?, ?)',
+                'INSERT INTO Pharmacy (name, address, latitude, longitude, city_id, isActive) VALUES (?, ?, ?, ?, ?, 1)',
                 [dto.name, dto.address, dto.latitude, dto.longitude, dto.city_id]
             );
             return { success: true, id: result.insertId };
+
         } catch (error) {
             if (error instanceof HttpException) throw error;
             throw new InternalServerErrorException('Došlo je do greške pri kreiranju apoteke.');
@@ -286,7 +296,7 @@ export class RepositoryService {
 
     async removePharmacy(id: number) {
         try {
-            
+
             const existing = await this.db.query<{ id: number }[]>(
                 'SELECT id FROM Pharmacy WHERE id = ? AND isActive = 1',
                 [id]
