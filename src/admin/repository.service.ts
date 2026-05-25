@@ -410,7 +410,7 @@ export class RepositoryService {
             );
 
             return { success: true };
-            
+
         } catch (error) {
             if (error instanceof HttpException) throw error;
             throw new InternalServerErrorException('Došlo je do greške pri uklanjanju radnog vremena.');
@@ -418,7 +418,36 @@ export class RepositoryService {
     }
 
     async createDuty(pharmacyId: number, dto: CreateDutyDto) {
-        throw new Error('Not implemented');
+        try {
+            const pharmacy = await this.db.query<{ id: number }[]>(
+                'SELECT id FROM Pharmacy WHERE id = ? AND isActive = 1',
+                [pharmacyId]
+            );
+
+            if (pharmacy.length === 0)
+                throw new NotFoundException(`Apoteka sa ID-em ${pharmacyId} ne postoji.`);
+
+            const overlap = await this.db.query<{ id: number }[]>(
+                `SELECT id FROM DutySchedule
+                WHERE pharmacy_id = ?
+                AND start_datetime < ? AND end_datetime > ?`,
+                [pharmacyId, dto.end_datetime, dto.start_datetime]
+            );
+
+            if (overlap.length > 0)
+                throw new BadRequestException('Dežurstvo se preklapa sa postojećim dežurstvom.');
+
+            const result = await this.db.query<ResultSetHeader>(
+                'INSERT INTO DutySchedule (start_datetime, end_datetime, pharmacy_id) VALUES (?, ?, ?)',
+                [dto.start_datetime, dto.end_datetime, pharmacyId]
+            );
+
+            return { success: true, id: result.insertId };
+            
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške pri dodavanju dežurstva.');
+        }
     }
 
     async removeDuty(pharmacyId: number, dutyId: number) {
