@@ -452,7 +452,7 @@ export class RepositoryService {
 
     async removeDuty(pharmacyId: number, dutyId: number) {
         try {
-            
+
             const existing = await this.db.query<{ id: number }[]>(
                 'SELECT id FROM DutySchedule WHERE id = ? AND pharmacy_id = ?',
                 [dutyId, pharmacyId]
@@ -475,7 +475,35 @@ export class RepositoryService {
     }
 
     async createScheduleException(pharmacyId: number, dto: CreateScheduleExceptionDto) {
-        throw new Error('Not implemented');
+        try {
+            const pharmacy = await this.db.query<{ id: number }[]>(
+                'SELECT id FROM Pharmacy WHERE id = ? AND isActive = 1',
+                [pharmacyId]
+            );
+
+            if (pharmacy.length === 0)
+                throw new NotFoundException(`Apoteka sa ID-em ${pharmacyId} ne postoji.`);
+
+            const existing = await this.db.query<{ id: number }[]>(
+                'SELECT id FROM PharmacyScheduleException WHERE pharmacy_id = ? AND exception_date = ?',
+                [pharmacyId, dto.exception_date]
+            );
+
+            if (existing.length > 0)
+                throw new BadRequestException(`Izuzetak za datum ${dto.exception_date} već postoji.`);
+
+            const result = await this.db.query<ResultSetHeader>(
+                `INSERT INTO PharmacyScheduleException ( exception_date, name, open_time, close_time, is_closed, reason, pharmacy_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                [pharmacyId, dto.exception_date, dto.name, dto.open_time ?? null, dto.close_time ?? null, dto.is_closed, dto.reason]
+            );
+
+            return { success: true, id: result.insertId };
+            
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške pri dodavanju izuzetka rasporeda.');
+        }
     }
 
     async updateScheduleException(pharmacyId: number, exId: number, dto: UpdateScheduleExceptionDto) {
