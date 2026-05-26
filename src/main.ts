@@ -5,6 +5,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filters';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import session from 'express-session';
+import MySQLStoreFactory from 'express-mysql-session';
 import passport from 'passport';
 import helmet from 'helmet';
 import { randomBytes } from 'crypto';
@@ -80,16 +81,28 @@ app.use((req, res, next) => {
     }),
   );
 
+  const MySQLStore = MySQLStoreFactory(session);
+  const sessionStore = new MySQLStore({
+    host: process.env.DB_HOST,
+    port: parseInt(process.env.DB_PORT ?? '3306', 10),
+    user: process.env.DB_USERNAME,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    clearExpired: true,
+    checkExpirationInterval: 900000,
+    expiration: 1800000,
+    createDatabaseTable: true,
+  });
+
   app.use(
     session({
       secret: process.env.SESSION_SECRET ?? 'super-secret',
       resave: false,
       saveUninitialized: false,
+      store: sessionStore,
       cookie: {
         httpOnly: true,
         secure: isProduction,
-        // 'none' is required for cross-origin (Vercel → Railway); CSRF middleware
-        // provides the CSRF protection that makes this safe in production.
         sameSite: isProduction ? 'none' : 'lax',
         maxAge: 1800000,
         path: '/',
