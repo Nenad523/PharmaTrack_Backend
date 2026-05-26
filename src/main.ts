@@ -26,6 +26,13 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const isProduction = process.env.NODE_ENV === 'production';
 
+  // Railway (and most cloud platforms) terminate SSL at the edge and forward
+  // requests internally as HTTP. Without this, req.secure = false and
+  // express-session won't send the Set-Cookie header when secure: true.
+  if (isProduction) {
+    app.set('trust proxy', 1);
+  }
+
   app.use(helmet());
 
   // HTTPS redirect with host header validation to prevent open redirect
