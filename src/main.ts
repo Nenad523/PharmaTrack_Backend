@@ -22,6 +22,18 @@ const ALLOWED_HOSTS = (process.env.ALLOWED_HOSTS || 'api.pharmatrack.me')
   .split(',')
   .map(h => h.trim());
 
+function isLocalOrigin(origin: string): boolean {
+  return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin);
+}
+
+function parseBooleanEnv(value: string | undefined, fallback: boolean): boolean {
+  if (value === undefined) {
+    return fallback;
+  }
+
+  return value.toLowerCase() === 'true';
+}
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const isProduction = process.env.NODE_ENV === 'production';
@@ -29,8 +41,19 @@ async function bootstrap() {
   // Railway (and most cloud platforms) terminate SSL at the edge and forward
   // requests internally as HTTP. Without this, req.secure = false and
   // express-session won't send the Set-Cookie header when secure: true.
-  if (isProduction) {
-    app.set('trust proxy', 1);
+  const allowedOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
+    : ['http://localhost:3000', 'http://127.0.0.1:3000'];
+  const hasRemoteOrigins = allowedOrigins.some((origin) => !isLocalOrigin(origin));
+  const sessionCookieSecure = parseBooleanEnv(
+    process.env.SESSION_COOKIE_SECURE,
+    isProduction || hasRemoteOrigins,
+  );
+  const sessionCookieSameSite = (process.env.SESSION_COOKIE_SAMESITE ??
+    (sessionCookieSecure ? 'none' : 'lax')) as 'lax' | 'none' | 'strict';
+
+  if (isProduction || sessionCookieSecure) {
+    app.getHttpAdapter().getInstance().set('trust proxy', 1);
   }
 
   app.use(helmet());
@@ -67,10 +90,6 @@ app.use((req, res, next) => {
       next();
     });
   }
-
-  const allowedOrigins = process.env.ALLOWED_ORIGINS
-    ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
-    : ['http://localhost:3000', 'http://127.0.0.1:3000'];
 
   app.enableCors({
     origin: allowedOrigins,
@@ -109,8 +128,8 @@ app.use((req, res, next) => {
       store: sessionStore,
       cookie: {
         httpOnly: true,
-        secure: isProduction,
-        sameSite: isProduction ? 'none' : 'lax',
+        secure: sessionCookieSecure,
+        sameSite: sessionCookieSameSite,
         maxAge: 1800000,
         path: '/',
       },
