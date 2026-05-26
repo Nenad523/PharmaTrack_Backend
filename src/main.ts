@@ -26,6 +26,27 @@ function isLocalOrigin(origin: string): boolean {
   return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin);
 }
 
+function isPrivateNetworkHost(hostname: string): boolean {
+  return (
+    /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
+    /^192\.168\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
+    /^172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}$/.test(hostname)
+  );
+}
+
+function isPrivateNetworkOrigin(origin: string): boolean {
+  try {
+    const parsedOrigin = new URL(origin);
+    return parsedOrigin.protocol === 'http:' && isPrivateNetworkHost(parsedOrigin.hostname);
+  } catch {
+    return false;
+  }
+}
+
+function isDevelopmentOrigin(origin: string): boolean {
+  return isLocalOrigin(origin) || isPrivateNetworkOrigin(origin);
+}
+
 function parseBooleanEnv(value: string | undefined, fallback: boolean): boolean {
   if (value === undefined) {
     return fallback;
@@ -44,7 +65,7 @@ async function bootstrap() {
   const allowedOrigins = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
     : ['http://localhost:3000', 'http://127.0.0.1:3000'];
-  const hasRemoteOrigins = allowedOrigins.some((origin) => !isLocalOrigin(origin));
+  const hasRemoteOrigins = allowedOrigins.some((origin) => !isDevelopmentOrigin(origin));
   const sessionCookieSecure = parseBooleanEnv(
     process.env.SESSION_COOKIE_SECURE,
     isProduction || hasRemoteOrigins,
@@ -92,7 +113,18 @@ app.use((req, res, next) => {
   }
 
   app.enableCors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        (!isProduction && isDevelopmentOrigin(origin))
+      ) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error('Origin is not allowed by CORS'));
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
