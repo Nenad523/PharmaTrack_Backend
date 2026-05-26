@@ -509,7 +509,7 @@ export class RepositoryService {
     async updateScheduleException(pharmacyId: number, exId: number, dto: UpdateScheduleExceptionDto) {
         try {
             const existing = await this.db.query<{ id: number }[]>(
-                'SELECT id FROM PrimaryScheduleException WHERE id = ? AND pharmacy_id = ?',
+                'SELECT id FROM PharmacyScheduleException WHERE id = ? AND pharmacy_id = ?',
                 [exId, pharmacyId]
             );
 
@@ -532,7 +532,7 @@ export class RepositoryService {
             values.push(exId);
 
             await this.db.query(
-                `UPDATE PrimaryScheduleException SET ${fields.join(', ')} WHERE id = ?`,
+                `UPDATE PharmacyScheduleException SET ${fields.join(', ')} WHERE id = ?`,
                 values
             );
 
@@ -546,7 +546,7 @@ export class RepositoryService {
     async removeScheduleException(pharmacyId: number, exId: number) {
         try {
             const existing = await this.db.query<{ id: number }[]>(
-                'SELECT id FROM PrimaryScheduleException WHERE id = ? AND pharmacy_id = ?',
+                'SELECT id FROM PharmacyScheduleException WHERE id = ? AND pharmacy_id = ?',
                 [exId, pharmacyId]
             );
 
@@ -554,7 +554,7 @@ export class RepositoryService {
                 throw new NotFoundException(`Izuzetak sa ID-em ${exId} ne postoji.`);
 
             await this.db.query(
-                'DELETE FROM PrimaryScheduleException WHERE id = ?',
+                'DELETE FROM PharmacyScheduleException WHERE id = ?',
                 [exId]
             );
 
