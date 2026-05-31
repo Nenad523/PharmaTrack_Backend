@@ -7,7 +7,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import session from 'express-session';
 import passport from 'passport';
 import helmet from 'helmet';
-import { randomBytes } from 'crypto';
+import { randomBytes } from 'crypto' ;
 
 const config = new DocumentBuilder()
   .setTitle('PharmaTrack API')
