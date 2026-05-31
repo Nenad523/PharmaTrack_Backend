@@ -105,5 +105,16 @@ export class RepositoryService {
         }
     }
 
-    async markAsNotified(notificationIds: number[]) {}
+    async markAsNotified(notificationIds: number[]) {
+        if (notificationIds.length === 0) return;
+        try {
+            const placeholders = notificationIds.map(() => '?').join(', ');
+            await this.db.query(
+                `UPDATE Notifications SET is_notified = 1 WHERE id IN (${placeholders})`,
+                notificationIds
+            );
+        } catch (error) {
+            throw new InternalServerErrorException('Došlo je do greške pri ažuriranju statusa notifikacija.');
+        }
+    }
 }
