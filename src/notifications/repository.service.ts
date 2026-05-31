@@ -60,7 +60,30 @@ export class RepositoryService {
         }
     }
 
-    async getUserNotifications(userId: number) {}
+    async getUserNotifications(userId: number) {
+        try {
+            const rows = await this.db.query<NotificationItem[]>(
+                `SELECT
+                    N.id,
+                    N.dose_id,
+                    M.name AS medication_name,
+                    D.strength,
+                    N.is_notified,
+                    N.created_at
+                FROM Notifications N
+                JOIN Doses D ON D.id = N.dose_id
+                JOIN Medication M ON M.id = D.medication_id
+                WHERE N.user_id = ?
+                ORDER BY N.created_at DESC`,
+                [userId]
+            );
+
+            return { success: true, data: rows, count: rows.length };
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške pri dohvatanju notifikacija.');
+        }
+    }
 
     async getSubscribersForDose(doseId: number): Promise<NotificationSubscriber[]> { return []; }
 
