@@ -17,6 +17,7 @@ import { CsrfMiddleware } from './common/middleware/csrf.middleware';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { EmbeddingService } from './common/embedding/embedding.service';
 import { AdminModule } from './admin/admin.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -36,7 +37,8 @@ import { AdminModule } from './admin/admin.module';
     CitiesModule,
     NewsModule,
     CloudinaryModule,
-    AdminModule],
+    AdminModule,
+    NotificationsModule],
   controllers: [AppController],
   providers: [
     AppService,
