@@ -38,7 +38,27 @@ export class RepositoryService {
         }
     }
 
-    async unsubscribe(userId: number, notificationId: number) {}
+    async unsubscribe(userId: number, notificationId: number) {
+        try {
+            const existing = await this.db.query<{ id: number }[]>(
+                'SELECT id FROM Notifications WHERE id = ? AND user_id = ?',
+                [notificationId, userId]
+            );
+
+            if (existing.length === 0)
+                throw new NotFoundException('Notifikacija ne postoji.');
+
+            await this.db.query(
+                'DELETE FROM Notifications WHERE id = ?',
+                [notificationId]
+            );
+
+            return { success: true };
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške pri otkazivanju pretplate.');
+        }
+    }
 
     async getUserNotifications(userId: number) {}
 
