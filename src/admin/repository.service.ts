@@ -510,7 +510,7 @@ export class RepositoryService {
     async updateScheduleException(pharmacyId: number, exId: number, dto: UpdateScheduleExceptionDto) {
         try {
             const existing = await this.db.query<{ id: number }[]>(
-                'SELECT id FROM PrimaryScheduleException WHERE id = ? AND pharmacy_id = ?',
+                'SELECT id FROM PharmacyScheduleException WHERE id = ? AND pharmacy_id = ?',
                 [exId, pharmacyId]
             );
 
@@ -533,7 +533,7 @@ export class RepositoryService {
             values.push(exId);
 
             await this.db.query(
-                `UPDATE PrimaryScheduleException SET ${fields.join(', ')} WHERE id = ?`,
+                `UPDATE PharmacyScheduleException SET ${fields.join(', ')} WHERE id = ?`,
                 values
             );
 
@@ -586,7 +586,7 @@ export class RepositoryService {
     async removeScheduleException(pharmacyId: number, exId: number) {
         try {
             const existing = await this.db.query<{ id: number }[]>(
-                'SELECT id FROM PrimaryScheduleException WHERE id = ? AND pharmacy_id = ?',
+                'SELECT id FROM PharmacyScheduleException WHERE id = ? AND pharmacy_id = ?',
                 [exId, pharmacyId]
             );
 
@@ -594,7 +594,7 @@ export class RepositoryService {
                 throw new NotFoundException(`Izuzetak sa ID-em ${exId} ne postoji.`);
 
             await this.db.query(
-                'DELETE FROM PrimaryScheduleException WHERE id = ?',
+                'DELETE FROM PharmacyScheduleException WHERE id = ?',
                 [exId]
             );
 
@@ -603,5 +603,48 @@ export class RepositoryService {
             if (error instanceof HttpException) throw error;
             throw new InternalServerErrorException('Došlo je do greške pri uklanjanju izuzetka rasporeda.');
         }
+    }
+
+    async searchPharmaciesAdmin(name: string) {
+        const rows = await this.db.query<{ id: number; name: string; address: string }[]>(
+            `SELECT id, name, address FROM Pharmacy WHERE name LIKE ? AND isActive = 1 ORDER BY name LIMIT 20`,
+            [`%${name}%`]
+        );
+        return { success: true, data: rows };
+    }
+
+    async getPharmacyAdminById(id: number) {
+        const rows = await this.db.query<{ id: number; name: string; address: string; latitude: number; longitude: number; city_id: number }[]>(
+            'SELECT id, name, address, latitude, longitude, city_id FROM Pharmacy WHERE id = ? AND isActive = 1 LIMIT 1',
+            [id]
+        );
+        if (rows.length === 0)
+            throw new NotFoundException(`Apoteka sa ID-em ${id} ne postoji.`);
+        return { success: true, data: rows[0] };
+    }
+
+    async getPharmacyWorkingHoursAdmin(pharmacyId: number) {
+        const rows = await this.db.query<{ id: number; day_of_week: string; open_time: string; close_time: string }[]>(
+            `SELECT id, day_of_week, open_time, close_time FROM WorkingHours WHERE pharmacy_id = ?
+             ORDER BY FIELD(day_of_week,'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'), open_time`,
+            [pharmacyId]
+        );
+        return { success: true, data: rows };
+    }
+
+    async getPharmacyDutyAdmin(pharmacyId: number) {
+        const rows = await this.db.query<{ id: number; start_datetime: string; end_datetime: string }[]>(
+            'SELECT id, start_datetime, end_datetime FROM DutySchedule WHERE pharmacy_id = ? ORDER BY start_datetime DESC',
+            [pharmacyId]
+        );
+        return { success: true, data: rows };
+    }
+
+    async getPharmacyScheduleExceptionsAdmin(pharmacyId: number) {
+        const rows = await this.db.query<{ id: number; exception_date: string; name: string; open_time: string | null; close_time: string | null; is_closed: boolean; reason: string }[]>(
+            'SELECT id, exception_date, name, open_time, close_time, is_closed, reason FROM PharmacyScheduleException WHERE pharmacy_id = ? ORDER BY exception_date DESC',
+            [pharmacyId]
+        );
+        return { success: true, data: rows };
     }
 }

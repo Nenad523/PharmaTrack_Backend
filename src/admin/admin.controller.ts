@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { SessionGuard } from '../common/guards/session.guard';
@@ -95,6 +95,36 @@ export class AdminController {
     }
 
     /// Endpointovi za apoteke V
+
+    @ApiOperation({ summary: 'Pretraga apoteka po imenu' })
+    @Get('/pharmacies')
+    async searchPharmacies(@Query('name') name: string) {
+        return this.service.searchPharmaciesAdmin(name ?? '');
+    }
+
+    @ApiOperation({ summary: 'Dohvatanje apoteke po ID-u za administraciju' })
+    @Get('/pharmacies/:id')
+    async getPharmacyById(@Param('id', ParsePositiveIntPipe) id: number) {
+        return this.service.getPharmacyAdminById(id);
+    }
+
+    @ApiOperation({ summary: 'Dohvatanje radnog vremena apoteke sa ID-evima' })
+    @Get('/pharmacies/:id/working-hours')
+    async getPharmacyWorkingHours(@Param('id', ParsePositiveIntPipe) id: number) {
+        return this.service.getPharmacyWorkingHoursAdmin(id);
+    }
+
+    @ApiOperation({ summary: 'Dohvatanje dežurstava apoteke sa ID-evima' })
+    @Get('/pharmacies/:id/duty')
+    async getPharmacyDuty(@Param('id', ParsePositiveIntPipe) id: number) {
+        return this.service.getPharmacyDutyAdmin(id);
+    }
+
+    @ApiOperation({ summary: 'Dohvatanje izuzetaka rasporeda apoteke sa ID-evima' })
+    @Get('/pharmacies/:id/schedule-exceptions')
+    async getPharmacyScheduleExceptions(@Param('id', ParsePositiveIntPipe) id: number) {
+        return this.service.getPharmacyScheduleExceptionsAdmin(id);
+    }
 
     @ApiOperation({ summary : 'Dodavanje nove apoteke'})
     @Post('/pharmacies')

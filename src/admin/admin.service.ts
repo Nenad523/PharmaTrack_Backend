@@ -112,4 +112,24 @@ export class AdminService {
         }
         return { success: true };
     }
+  
+    async searchPharmaciesAdmin(name: string) {
+        return this.repo.searchPharmaciesAdmin(name);
+    }
+
+    async getPharmacyAdminById(id: number) {
+        return this.repo.getPharmacyAdminById(id);
+    }
+
+    async getPharmacyWorkingHoursAdmin(pharmacyId: number) {
+        return this.repo.getPharmacyWorkingHoursAdmin(pharmacyId);
+    }
+
+    async getPharmacyDutyAdmin(pharmacyId: number) {
+        return this.repo.getPharmacyDutyAdmin(pharmacyId);
+    }
+
+    async getPharmacyScheduleExceptionsAdmin(pharmacyId: number) {
+        return this.repo.getPharmacyScheduleExceptionsAdmin(pharmacyId);
+    }
 }
