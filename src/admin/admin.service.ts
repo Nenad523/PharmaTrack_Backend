@@ -105,7 +105,9 @@ export class AdminService {
 
     async updateInventory(pharmacyId: number, doseId: number, dto: UpdateInventoryDto) {
         const result = await this.repo.updateInventory(pharmacyId, doseId, dto);
+        console.log(`[updateInventory] wasUnavailable=${result.wasUnavailable}, quantity=${dto.quantity}`);
         if (dto.quantity > 0 && result.wasUnavailable) {
+            console.log(`[updateInventory] Okidam triggerForDose...`);
             void this.notificationsService.triggerForDose(doseId, result.pharmacyName);
         }
         return { success: true };

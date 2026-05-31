@@ -562,12 +562,12 @@ export class RepositoryService {
             if (dose.length === 0)
                 throw new NotFoundException(`Doza sa ID-em ${doseId} ne postoji.`);
 
-            const current = await this.db.query<{ quantity: number }[]>(
-                'SELECT quantity FROM Inventory WHERE pharmacy_id = ? AND dose_id = ?',
-                [pharmacyId, doseId]
+            const current = await this.db.query<{ total: number }[]>(
+                'SELECT SUM(quantity) AS total FROM Inventory WHERE dose_id = ?',
+                [doseId]
             );
 
-            const wasUnavailable = current.length === 0 || current[0].quantity === 0;
+            const wasUnavailable = !current[0].total || current[0].total === 0;
 
             await this.db.query(
                 `INSERT INTO Inventory (pharmacy_id, dose_id, quantity, lastUpdated)
