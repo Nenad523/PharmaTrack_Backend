@@ -12,6 +12,7 @@ import { UpdateWorkingHoursDto } from './dto/update-workingHours.dto';
 import { CreateDutyDto } from './dto/create-duty.dto';
 import { CreateScheduleExceptionDto } from './dto/create-scheduleException.dto';
 import { UpdateScheduleExceptionDto } from './dto/update-scheduleException.dto';
+import { UpdateInventoryDto } from './dto/update-inventory.dto';
 import { EmbeddingService } from '../common/embedding/embedding.service';
 import { ResultSetHeader } from 'mysql2';
 @Injectable()
@@ -540,6 +541,45 @@ export class RepositoryService {
         } catch (error) {
             if (error instanceof HttpException) throw error;
             throw new InternalServerErrorException('Došlo je do greške pri izmjeni izuzetka rasporeda.');
+        }
+    }
+
+    async updateInventory(pharmacyId: number, doseId: number, dto: UpdateInventoryDto) {
+        try {
+            const pharmacy = await this.db.query<{ id: number; name: string }[]>(
+                'SELECT id, name FROM Pharmacy WHERE id = ? AND isActive = 1',
+                [pharmacyId]
+            );
+
+            if (pharmacy.length === 0)
+                throw new NotFoundException(`Apoteka sa ID-em ${pharmacyId} ne postoji.`);
+
+            const dose = await this.db.query<{ id: number }[]>(
+                'SELECT id FROM Doses WHERE id = ? AND isActive = 1',
+                [doseId]
+            );
+
+            if (dose.length === 0)
+                throw new NotFoundException(`Doza sa ID-em ${doseId} ne postoji.`);
+
+            const current = await this.db.query<{ quantity: number }[]>(
+                'SELECT quantity FROM Inventory WHERE pharmacy_id = ? AND dose_id = ?',
+                [pharmacyId, doseId]
+            );
+
+            const wasUnavailable = current.length === 0 || current[0].quantity === 0;
+
+            await this.db.query(
+                `INSERT INTO Inventory (pharmacy_id, dose_id, quantity, lastUpdated)
+                VALUES (?, ?, ?, NOW())
+                ON DUPLICATE KEY UPDATE quantity = ?, lastUpdated = NOW()`,
+                [pharmacyId, doseId, dto.quantity, dto.quantity]
+            );
+
+            return { pharmacyName: pharmacy[0].name, wasUnavailable };
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške pri ažuriranju inventara.');
         }
     }
 

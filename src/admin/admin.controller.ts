@@ -17,6 +17,7 @@ import { UpdateWorkingHoursDto } from './dto/update-workingHours.dto';
 import { CreateDutyDto } from './dto/create-duty.dto';
 import { CreateScheduleExceptionDto } from './dto/create-scheduleException.dto';
 import { UpdateScheduleExceptionDto } from './dto/update-scheduleException.dto';
+import { UpdateInventoryDto } from './dto/update-inventory.dto';
 @Controller('api/v1/admin')
 @UseGuards(SessionGuard, RolesGuard)
 @Roles('admin')
@@ -183,6 +184,16 @@ export class AdminController {
         @Body() dto: UpdateScheduleExceptionDto
     ) {
     return this.service.updateScheduleException(id, exId, dto);
+    }
+
+    @ApiOperation({ summary: 'Ažuriranje inventara apoteke (testiranje notifikacija)' })
+    @Put('/pharmacies/:pharmacyId/inventory/:doseId')
+    async updateInventory(
+        @Param('pharmacyId', ParsePositiveIntPipe) pharmacyId: number,
+        @Param('doseId', ParsePositiveIntPipe) doseId: number,
+        @Body() dto: UpdateInventoryDto,
+    ) {
+        return this.service.updateInventory(pharmacyId, doseId, dto);
     }
 
     @ApiOperation({ summary: 'Uklanjanje izuzetka rasporeda apoteke' })

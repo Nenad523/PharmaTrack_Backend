@@ -12,11 +12,16 @@ import { UpdateWorkingHoursDto } from './dto/update-workingHours.dto';
 import { CreateDutyDto } from './dto/create-duty.dto';
 import { CreateScheduleExceptionDto } from './dto/create-scheduleException.dto';
 import { UpdateScheduleExceptionDto } from './dto/update-scheduleException.dto';
+import { UpdateInventoryDto } from './dto/update-inventory.dto';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class AdminService {
 
-    constructor(private repo: RepositoryService) {}
+    constructor(
+        private repo: RepositoryService,
+        private notificationsService: NotificationsService,
+    ) {}
 
     async createMedication(dto: CreateMedicationDto) {
         return this.repo.createMedication(dto);
@@ -96,5 +101,13 @@ export class AdminService {
 
     async removeScheduleException(id: number, exId: number) {
         return this.repo.removeScheduleException(id, exId);
+    }
+
+    async updateInventory(pharmacyId: number, doseId: number, dto: UpdateInventoryDto) {
+        const result = await this.repo.updateInventory(pharmacyId, doseId, dto);
+        if (dto.quantity > 0 && result.wasUnavailable) {
+            void this.notificationsService.triggerForDose(doseId, result.pharmacyName);
+        }
+        return { success: true };
     }
 }
