@@ -85,7 +85,25 @@ export class RepositoryService {
         }
     }
 
-    async getSubscribersForDose(doseId: number): Promise<NotificationSubscriber[]> { return []; }
+    async getSubscribersForDose(doseId: number): Promise<NotificationSubscriber[]> {
+        try {
+            return await this.db.query<NotificationSubscriber[]>(
+                `SELECT
+                    N.id AS notification_id,
+                    U.email AS user_email,
+                    M.name AS medication_name,
+                    D.strength
+                FROM Notifications N
+                JOIN Users U ON U.id = N.user_id
+                JOIN Doses D ON D.id = N.dose_id
+                JOIN Medication M ON M.id = D.medication_id
+                WHERE N.dose_id = ? AND N.is_notified = 0`,
+                [doseId]
+            );
+        } catch (error) {
+            throw new InternalServerErrorException('Došlo je do greške pri dohvatanju pretplatnika.');
+        }
+    }
 
     async markAsNotified(notificationIds: number[]) {}
 }
