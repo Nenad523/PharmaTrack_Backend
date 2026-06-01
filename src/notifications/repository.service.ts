@@ -73,7 +73,7 @@ export class RepositoryService {
                 FROM Notifications N
                 JOIN Doses D ON D.id = N.dose_id
                 JOIN Medication M ON M.id = D.medication_id
-                WHERE N.user_id = ?
+                WHERE N.user_id = ? AND N.is_notified = 0
                 ORDER BY N.created_at DESC`,
                 [userId]
             );
