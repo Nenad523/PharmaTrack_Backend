@@ -18,13 +18,22 @@ export class RepositoryService {
             if (dose.length === 0)
                 throw new NotFoundException(`Doza sa ID-em ${doseId} ne postoji.`);
 
-            const existing = await this.db.query<{ id: number }[]>(
-                'SELECT id FROM Notifications WHERE user_id = ? AND dose_id = ?',
+            const existing = await this.db.query<{ id: number; is_notified: number }[]>(
+                'SELECT id, is_notified FROM Notifications WHERE user_id = ? AND dose_id = ?',
                 [userId, doseId]
             );
 
-            if (existing.length > 0)
-                throw new ConflictException('Već ste pretplaćeni na obavijesti za ovu dozu.');
+            if (existing.length > 0) {
+                if (existing[0].is_notified === 0)
+                    throw new ConflictException('Već ste pretplaćeni na obavijesti za ovu dozu.');
+
+                await this.db.query(
+                    'UPDATE Notifications SET is_notified = 0, created_at = NOW() WHERE id = ?',
+                    [existing[0].id]
+                );
+
+                return { success: true, id: existing[0].id };
+            }
 
             const result = await this.db.query<ResultSetHeader>(
                 'INSERT INTO Notifications (user_id, dose_id) VALUES (?, ?)',
