@@ -77,7 +77,7 @@ export class EmailService {
     strength: string,
     pharmacyName: string,
   ) {
-    const searchUrl = `${process.env.FRONTEND_URL}/search`;
+    const searchUrl = `${process.env.FRONTEND_URL}/api/v1/medication`;
     const subject = `${medicationName} ${strength} je dostupan!`;
     const html = `
       <div style="background: #f3f6fb; padding: 32px 16px; font-family: Arial, Helvetica, sans-serif;">
