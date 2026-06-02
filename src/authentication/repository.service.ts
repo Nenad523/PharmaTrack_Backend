@@ -61,7 +61,7 @@ export class RepositoryService {
         const result = await this.db.query<ResultSetHeader>(
             'INSERT INTO Users \
             (fullName, email, passwordHash, role, verificationToken, verificationTokenExpiry) VALUES (?, ?, ?, ?, ?, ?)',
-            [fullName, email, password, 'user', verificationToken, verificationTokenExpiry.toISOString()]
+            [fullName, email, password, 'user', verificationToken, verificationTokenExpiry.toISOString().slice(0, 19).replace('T', ' ')]
         );
 
         if (result.affectedRows === 0) {
