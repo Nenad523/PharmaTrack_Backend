@@ -4,7 +4,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable prettier/prettier */
-import { Controller, Post, Request, UseGuards, Get, Body, Query, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Request, UseGuards, Get, Body, Query, BadRequestException, Logger, InternalServerErrorException } from '@nestjs/common';
 import { AuthenticationService } from './authentication.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -15,6 +15,8 @@ import { Throttle } from '@nestjs/throttler';
 @Controller('api/v1/auth')
 export class AuthenticationController {
 
+    private readonly logger = new Logger(AuthenticationController.name);
+
     constructor(private authService: AuthenticationService) {}
     
     @ApiOperation({ 'summary' : 'Prijavljivanje putem emaila i lozinke'})
@@ -22,18 +24,28 @@ export class AuthenticationController {
     @UseGuards(AuthGuard('local'))
     @Post('/login')
     async login(@Body() _loginDto: LoginDto, @Request() req){
-        await new Promise<void>((resolve, reject) => {
-            req.logIn(req.user, (error: unknown) => {
-                if (error) {
-                    reject(error instanceof Error ? error : new Error('Login failed'));
-                    return;
-                }
+        try {
+            await new Promise<void>((resolve, reject) => {
+                req.logIn(req.user, (error: unknown) => {
+                    if (error) {
+                        reject(error instanceof Error ? error : new Error('Login failed'));
+                        return;
+                    }
 
-                resolve();
+                    resolve();
+                });
             });
-        });
 
-        return req.user;
+            return req.user;
+        } catch (error) {
+            this.logger.error(
+                'Login failed during session establishment',
+                error instanceof Error ? error.stack : String(error),
+            );
+            throw error instanceof Error && (error as any).status
+                ? error
+                : new InternalServerErrorException('Login failed. Please try again.');
+        }
     }
 
     @ApiOperation({ 'summary' : 'Dohvatanje podataka o trenutno prijavljenom korisniku.'})
@@ -66,7 +78,15 @@ export class AuthenticationController {
     async register(@Body() body: RegisterDto) {
         const { email, password, fullName } = body;
 
-        return this.authService.register(email, password, fullName);
+        try {
+            return await this.authService.register(email, password, fullName);
+        } catch (error) {
+            this.logger.error(
+                `Registration failed for email: ${email}`,
+                error instanceof Error ? error.stack : String(error),
+            );
+            throw error;
+        }
     }
 
     @ApiOperation({ 'summary' : 'Verifikacija mail adrese nakon kreiranja naloga.'})

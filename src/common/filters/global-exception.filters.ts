@@ -3,10 +3,12 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable prettier/prettier */
 
-import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus} from "@nestjs/common";
+import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus, Logger} from "@nestjs/common";
 
 @Catch() // ← hvata SVE greške
 export class GlobalExceptionFilter implements ExceptionFilter {
+
+  private readonly logger = new Logger(GlobalExceptionFilter.name);
 
   catch(exception: unknown, host: ArgumentsHost) {
     // host je kontekst trenutnog zahtjeva
@@ -37,6 +39,17 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       } else {
         message = exception.message
       }
+    }
+
+    if (status >= 500) {
+      this.logger.error(
+        `Unhandled exception — HTTP ${status}: ${Array.isArray(message) ? message.join(', ') : message}`,
+        exception instanceof Error ? exception.stack : String(exception),
+      );
+    } else {
+      this.logger.warn(
+        `HTTP ${status}: ${Array.isArray(message) ? message.join(', ') : message}`,
+      );
     }
 
     if (response.headersSent) return;
