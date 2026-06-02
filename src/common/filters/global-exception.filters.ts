@@ -39,7 +39,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       }
     }
 
-    // JSON odgovor klijentu
+    if (response.headersSent) return;
+
     response.status(status).json({
       success: false,
       error: {
