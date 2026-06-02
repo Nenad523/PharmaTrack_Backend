@@ -155,13 +155,6 @@ app.use((req, res, next) => {
       createDatabaseTable: true,
     });
 
-    // Wait for the store to finish creating its sessions table before the app
-    // starts accepting requests. onReady() resolves once the table exists (or
-    // rejects if the connection / DDL statement fails).
-    await new Promise<void>((resolve, reject) => {
-      sessionStore.onReady().then(resolve).catch(reject);
-    });
-
     console.log('[SessionStore] MySQL session store initialized successfully');
 
     // Catch runtime errors (e.g. connection drops after startup) so they are
