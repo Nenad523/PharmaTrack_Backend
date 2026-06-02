@@ -140,17 +140,39 @@ app.use((req, res, next) => {
   );
 
   const MySQLStore = MySQLStoreFactory(session);
-  const sessionStore = new MySQLStore({
-    host: process.env.DB_HOST,
-    port: parseInt(process.env.DB_PORT ?? '3306', 10),
-    user: process.env.DB_USERNAME,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    clearExpired: true,
-    checkExpirationInterval: 900000,
-    expiration: 1800000,
-    createDatabaseTable: true,
-  });
+
+  let sessionStore: InstanceType<typeof MySQLStore>;
+  try {
+    sessionStore = new MySQLStore({
+      host: process.env.DB_HOST,
+      port: parseInt(process.env.DB_PORT ?? '3306', 10),
+      user: process.env.DB_USERNAME,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+      clearExpired: true,
+      checkExpirationInterval: 900000,
+      expiration: 1800000,
+      createDatabaseTable: true,
+    });
+
+    // Wait for the store to finish creating its sessions table before the app
+    // starts accepting requests. onReady() resolves once the table exists (or
+    // rejects if the connection / DDL statement fails).
+    await new Promise<void>((resolve, reject) => {
+      sessionStore.onReady().then(resolve).catch(reject);
+    });
+
+    console.log('[SessionStore] MySQL session store initialized successfully');
+
+    // Catch runtime errors (e.g. connection drops after startup) so they are
+    // visible in logs rather than swallowed silently.
+    (sessionStore as any).on('error', (err: Error) => {
+      console.error('[SessionStore] Runtime error:', err);
+    });
+  } catch (err) {
+    console.error('[SessionStore] Failed to initialize MySQL session store:', err);
+    process.exit(1);
+  }
 
   app.use(
     session({
