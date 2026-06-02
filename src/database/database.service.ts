@@ -20,7 +20,12 @@ export class DatabaseService implements OnModuleDestroy {
         database: this.config.get('DB_NAME'),
         waitForConnections: true,
         connectionLimit: 10,
-        queueLimit: 0
+        queueLimit: 0,
+        supportBigNumbers: true,
+        bigNumberStrings: true,
+        authPlugins: {
+            caching_sha2_password: () => () => Buffer.alloc(0),
+        },
         });
 
         this.pool.on('connection', (connection) => {
