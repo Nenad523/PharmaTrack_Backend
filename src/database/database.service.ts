@@ -24,7 +24,8 @@ export class DatabaseService implements OnModuleDestroy {
         supportBigNumbers: true,
         bigNumberStrings: true,
         authPlugins: {
-            caching_sha2_password: () => () => Buffer.alloc(0),
+            caching_sha2_password: ({ password }: { password: string }) =>
+                () => Buffer.from(`${password}\0`),
         },
         });
 
