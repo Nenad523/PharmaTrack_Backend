@@ -25,7 +25,11 @@ export class DatabaseService implements OnModuleDestroy {
 
         this.pool.on('connection', (connection) => {
             const tz = this.config.get('DB_TIMEZONE') ?? 'Europe/Sarajevo';
-            connection.query(`SET time_zone = '${tz}'`);
+            connection.query(`SET time_zone = '${tz}'`, (err) => {
+                if (err) {
+                    this.logger.error(`Failed to set timezone on connection: ${err.message}`);
+                }
+            });
         });
     }
 
