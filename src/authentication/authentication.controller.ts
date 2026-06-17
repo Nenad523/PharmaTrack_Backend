@@ -11,11 +11,16 @@ import { RegisterDto } from './dto/register.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { JwtService } from '@nestjs/jwt';
+import type { JwtPayload } from './jwt.strategy';
 
 @Controller('api/v1/auth')
 export class AuthenticationController {
 
-    constructor(private authService: AuthenticationService) {}
+    constructor(
+        private authService: AuthenticationService,
+        private jwtService: JwtService,
+    ) {}
     
     @ApiOperation({ 'summary' : 'Prijavljivanje putem emaila i lozinke'})
     @Throttle( { default : { limit: 5, ttl: 300000 } } )
@@ -91,5 +96,16 @@ export class AuthenticationController {
     @Get('/csrf-token')
     getCsrfToken(@Request() req){
         return { csrfToken: (req.session as any).csrfToken ?? null };
+    }
+
+    @ApiOperation({ 'summary' : 'JWT prijava za mobilnu aplikaciju.' })
+    @Throttle( { default : { limit: 5, ttl: 300000 } } )
+    @UseGuards(AuthGuard('local'))
+    @Post('/mobile-login')
+    async mobileLogin(@Body() _loginDto: LoginDto, @Request() req) {
+        const user = req.user as { id: number; email: string; role: string; fullName: string; pharmacy_id: number | null };
+        const payload: JwtPayload = { sub: user.id, email: user.email, role: user.role };
+        const access_token = await this.jwtService.signAsync(payload);
+        return { access_token, user };
     }
 }
