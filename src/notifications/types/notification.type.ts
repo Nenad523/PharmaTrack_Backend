@@ -10,6 +10,8 @@ export type NotificationItem = {
 export type NotificationSubscriber = {
     notification_id: number;
     user_email: string;
+    expo_push_token: string | null;
+    email_notifications_enabled: number;
     medication_name: string;
     strength: string;
 };

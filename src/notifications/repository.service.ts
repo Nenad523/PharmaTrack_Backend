@@ -100,6 +100,8 @@ export class RepositoryService {
                 `SELECT
                     N.id AS notification_id,
                     U.email AS user_email,
+                    U.expo_push_token,
+                    U.email_notifications_enabled,
                     M.name AS medication_name,
                     D.strength
                 FROM Notifications N
@@ -124,6 +126,42 @@ export class RepositoryService {
             );
         } catch (error) {
             throw new InternalServerErrorException('Došlo je do greške pri ažuriranju statusa notifikacija.');
+        }
+    }
+
+    async savePushToken(userId: number, token: string) {
+        try {
+            await this.db.query(
+                'UPDATE Users SET expo_push_token = ? WHERE id = ?',
+                [token, userId]
+            );
+            return { success: true };
+        } catch (error) {
+            throw new InternalServerErrorException('Došlo je do greške pri čuvanju push tokena.');
+        }
+    }
+
+    async getPreferences(userId: number) {
+        try {
+            const rows = await this.db.query<{ email_notifications_enabled: number }[]>(
+                'SELECT email_notifications_enabled FROM Users WHERE id = ?',
+                [userId]
+            );
+            return rows[0] ?? { email_notifications_enabled: 1 };
+        } catch (error) {
+            throw new InternalServerErrorException('Došlo je do greške pri dohvatanju podešavanja.');
+        }
+    }
+
+    async saveEmailPreference(userId: number, enabled: boolean) {
+        try {
+            await this.db.query(
+                'UPDATE Users SET email_notifications_enabled = ? WHERE id = ?',
+                [enabled ? 1 : 0, userId]
+            );
+            return { success: true };
+        } catch (error) {
+            throw new InternalServerErrorException('Došlo je do greške pri čuvanju podešavanja.');
         }
     }
 }
