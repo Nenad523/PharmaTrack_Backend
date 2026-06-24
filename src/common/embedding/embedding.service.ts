@@ -50,6 +50,6 @@ export class EmbeddingService {
             file,
             language: 'hr',
         });
-        return response.text;
+        return response.text.trim().replace(/[.,]+$/, '');
     }
 }
