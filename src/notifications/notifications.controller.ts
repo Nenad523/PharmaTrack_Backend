@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Request, UseGuards } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
-import { SessionGuard } from '../common/guards/session.guard';
+import { JwtOrSessionGuard } from '../common/guards/jwt-or-session.guard';
 import { NotificationsService } from './notifications.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { SavePushTokenDto } from './dto/save-push-token.dto';
@@ -8,7 +8,7 @@ import { SavePreferencesDto } from './dto/save-preferences.dto';
 import { ParsePositiveIntPipe } from '../common/pipes/parse-positive-int.pipe';
 
 @Controller('api/v1/notifications')
-@UseGuards(SessionGuard)
+@UseGuards(JwtOrSessionGuard)
 export class NotificationsController {
     constructor(private service: NotificationsService) {}
 
