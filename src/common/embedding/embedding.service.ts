@@ -48,7 +48,7 @@ export class EmbeddingService {
         const response = await this.getClient().audio.transcriptions.create({
             model: 'whisper-1',
             file,
-            language: 'sr',
+            language: 'hr',
         });
         return response.text;
     }
