@@ -41,4 +41,15 @@ export class EmbeddingService {
         const magB = Math.sqrt(b.reduce((sum, val) => sum + val * val, 0));
         return dot / (magA * magB);
     }
+
+    async transcribeAudio(buffer: Buffer, filename: string): Promise<string> {
+        const { toFile } = await import('openai');
+        const file = await toFile(buffer, filename, { type: 'audio/m4a' });
+        const response = await this.getClient().audio.transcriptions.create({
+            model: 'whisper-1',
+            file,
+            language: 'sr',
+        });
+        return response.text;
+    }
 }

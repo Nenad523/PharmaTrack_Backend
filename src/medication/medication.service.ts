@@ -2,11 +2,15 @@
 /* eslint-disable prettier/prettier */
 import { Injectable } from '@nestjs/common';
 import { MedicationRepository } from './medication-repository.service';
+import { EmbeddingService } from '../common/embedding/embedding.service';
 
 @Injectable()
 export class MedicationService {
 
-    constructor(private rep: MedicationRepository) {}
+    constructor(
+        private rep: MedicationRepository,
+        private embedding: EmbeddingService,
+    ) {}
 
     searchAll(name: string){
         return this.rep.searchAll(name);
@@ -30,6 +34,10 @@ export class MedicationService {
 
     searchBySymptom(symptom: string){
         return this.rep.searchBySymptom(symptom);
+    }
+
+    async transcribeVoice(buffer: Buffer, filename: string): Promise<string> {
+        return this.embedding.transcribeAudio(buffer, filename);
     }
 
 }

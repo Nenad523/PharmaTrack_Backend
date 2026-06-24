@@ -2,7 +2,7 @@
 import { Injectable, NestMiddleware, BadRequestException } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 
-const CSRF_EXEMPT_PATHS = ['/api/v1/auth/login', '/api/v1/auth/register', '/api/v1/auth/mobile-login', '/api/v1/upload/medication-image'];
+const CSRF_EXEMPT_PATHS = ['/api/v1/auth/login', '/api/v1/auth/register', '/api/v1/auth/mobile-login', '/api/v1/upload/medication-image', '/api/v1/medication/transcribe'];
 const SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS'];
 
 @Injectable()

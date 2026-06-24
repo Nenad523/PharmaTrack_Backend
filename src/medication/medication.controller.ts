@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable prettier/prettier */
 
-import { Controller, Get, Query, Param, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Query, Param, BadRequestException, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { MedicationDto } from './dto/medication-dto';
 import { MedicationService } from './medication.service';
 import { ParsePositiveIntPipe } from '../common/pipes/parse-positive-int.pipe';
@@ -55,5 +56,12 @@ export class MedicationController {
         return this.medicationService.getAlternatives(id);
     }
 
-    
+    @ApiOperation({ summary: 'Transkribovanje glasovnog upita u tekst pomoću Whisper AI.' })
+    @Post('/transcribe')
+    @UseInterceptors(FileInterceptor('audio', { limits: { fileSize: 10 * 1024 * 1024 } }))
+    async transcribeVoice(@UploadedFile() file: Express.Multer.File) {
+        if (!file) throw new BadRequestException('Audio fajl nije proslijeđen.');
+        const text = await this.medicationService.transcribeVoice(file.buffer, file.originalname || 'voice.m4a');
+        return { text };
+    }
 }
