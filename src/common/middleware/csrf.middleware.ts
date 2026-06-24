@@ -17,6 +17,11 @@ export class CsrfMiddleware implements NestMiddleware {
             return next();
         }
 
+        // JWT-authenticated requests are inherently CSRF-safe (no cookies)
+        if ((req.headers.authorization as string)?.startsWith('Bearer ')) {
+            return next();
+        }
+
         const token = req.headers['x-csrf-token'] as string;
         const sessionToken = (req.session as any)?.csrfToken;
 

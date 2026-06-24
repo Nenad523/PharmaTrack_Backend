@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
-import { SessionGuard } from '../common/guards/session.guard';
+import { JwtOrSessionGuard } from '../common/guards/jwt-or-session.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
 import { Roles } from '../common/decorators/roles.decorator';
 import { CreateMedicationDto } from './dto/create-medication.dto';
@@ -19,7 +19,7 @@ import { CreateScheduleExceptionDto } from './dto/create-scheduleException.dto';
 import { UpdateScheduleExceptionDto } from './dto/update-scheduleException.dto';
 import { UpdateInventoryDto } from './dto/update-inventory.dto';
 @Controller('api/v1/admin')
-@UseGuards(SessionGuard, RolesGuard)
+@UseGuards(JwtOrSessionGuard, RolesGuard)
 @Roles('admin')
 export class AdminController {
 
