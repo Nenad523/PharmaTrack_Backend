@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { Controller, Post, UseInterceptors, UploadedFile, BadRequestException, Body } from '@nestjs/common';
+import { Controller, Post, Delete, Param, UseInterceptors, UploadedFile, BadRequestException, Body } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CloudinaryService } from './cloudinary.service';
 import { ApiOperation, ApiConsumes, ApiBody } from '@nestjs/swagger';
@@ -121,5 +121,37 @@ export class CloudinaryController {
     );
 
     return { pharmacyId: id, imageUrl: url };
+  }
+
+  @ApiOperation({ summary: 'Brisanje slike lijeka' })
+  @Delete('/medication-image/:id')
+  async removeMedicationImage(@Param('id') idParam: string) {
+    const id = parseInt(idParam, 10);
+    if (isNaN(id)) throw new BadRequestException('Neispravan ID lijeka');
+
+    const rows = await this.db.query<any[]>(
+      'SELECT id FROM Medication WHERE id = ? AND isActive = 1',
+      [id]
+    );
+    if (rows.length === 0) throw new BadRequestException(`Lijek sa ID-em ${id} nije pronađen`);
+
+    await this.db.query('UPDATE Medication SET img_url = NULL WHERE id = ?', [id]);
+    return { success: true };
+  }
+
+  @ApiOperation({ summary: 'Brisanje slike apoteke' })
+  @Delete('/pharmacy-image/:id')
+  async removePharmacyImage(@Param('id') idParam: string) {
+    const id = parseInt(idParam, 10);
+    if (isNaN(id)) throw new BadRequestException('Neispravan ID apoteke');
+
+    const rows = await this.db.query<any[]>(
+      'SELECT id FROM Pharmacy WHERE id = ? AND isActive = 1',
+      [id]
+    );
+    if (rows.length === 0) throw new BadRequestException(`Apoteka sa ID-em ${id} nije pronađena`);
+
+    await this.db.query('UPDATE Pharmacy SET img_url = NULL WHERE id = ?', [id]);
+    return { success: true };
   }
 }
