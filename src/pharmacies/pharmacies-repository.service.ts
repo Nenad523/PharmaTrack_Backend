@@ -221,6 +221,7 @@ export class PharmaciesRepository {
                     P.latitude,
                     P.longitude,
                     P.isActive,
+                    P.is_state,
                     ${distanceSql} AS distance
                 FROM Pharmacy P
                 JOIN City C ON C.id = P.city_id
@@ -333,6 +334,7 @@ export class PharmaciesRepository {
                         I.pharmacy_id AS pharmacyId,
                         D.id AS doseId,
                         D.strength,
+                        D.is_refundable,
                         I.lastUpdated
                     FROM Inventory I
                     JOIN Doses D ON D.id = I.dose_id
@@ -356,6 +358,7 @@ export class PharmaciesRepository {
                     doseId: row.doseId,
                     strength: row.strength,
                     lastUpdated: row.lastUpdated,
+                    is_refundable: Boolean(row.is_refundable),
                 });
             }
 
@@ -518,6 +521,7 @@ export class PharmaciesRepository {
                     P.latitude,
                     P.longitude,
                     P.isActive,
+                    P.is_state,
                     P.img_url,
                     DS.start_datetime AS dutyStart,
                     DS.end_datetime AS dutyEnd
@@ -564,6 +568,7 @@ export class PharmaciesRepository {
                     latitude: pharmacy.latitude,
                     longitude: pharmacy.longitude,
                     isActive: pharmacy.isActive,
+                    is_state: Boolean(pharmacy.is_state),
                     img_url: pharmacy.img_url ?? null,
                     isOnDuty: pharmacy.dutyStart !== null,
                     phones: phones.map(p => p.number),

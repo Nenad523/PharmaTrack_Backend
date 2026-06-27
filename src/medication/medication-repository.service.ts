@@ -111,11 +111,12 @@ export class MedicationRepository {
         try {
             
             const rows = await this.db.query<Doses[]>(
-                                   `SELECT 
+                                   `SELECT
                                     D.id,
-                                    D.strength
+                                    D.strength,
+                                    D.is_refundable
                                     FROM Medication M
-                                    LEFT JOIN Doses D 
+                                    LEFT JOIN Doses D
                                         ON M.id = D.medication_id
                                     WHERE M.id = ? AND D.isActive = 1`,
                                     [id]

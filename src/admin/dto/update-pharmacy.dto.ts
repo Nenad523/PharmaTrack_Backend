@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, MinLength, MaxLength, IsNumber, Min, Max } from 'class-validator';
+import { IsBoolean, IsOptional, IsString, MinLength, MaxLength, IsNumber, Min, Max } from 'class-validator';
 
 export class UpdatePharmacyDto {
     
@@ -36,4 +36,9 @@ export class UpdatePharmacyDto {
   @IsOptional()
   @IsNumber()
   city_id?: number;
+
+  @ApiProperty({ example: false })
+  @IsOptional()
+  @IsBoolean()
+  is_state?: boolean;
 }

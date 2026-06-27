@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { JwtOrSessionGuard } from '../common/guards/jwt-or-session.guard';
@@ -9,6 +9,7 @@ import { UpdateMedicationDto } from './dto/update-medication.dto';
 import { CreateIngredientDto } from './dto/create-ingredient.dto';
 import { LinkIngredientDto } from './dto/link-ingredient.dto';
 import { CreateDoseDto } from './dto/create-dose.dto';
+import { UpdateDoseDto } from './dto/update-dose.dto';
 import { ParsePositiveIntPipe } from '../common/pipes/parse-positive-int.pipe';
 import { CreatePharmacyDto } from './dto/create-pharmacy.dto';
 import { UpdatePharmacyDto } from './dto/update-pharmacy.dto';
@@ -92,6 +93,16 @@ export class AdminController {
         @Param('doseId', ParsePositiveIntPipe) doseId: number,
     ) {
         return this.service.deleteDose(medicationId, doseId);
+    }
+
+    @ApiOperation({ summary: 'Ažuriranje refundabilnosti doze' })
+    @Patch('/medications/:id/doses/:doseId')
+    async updateDose(
+        @Param('id', ParsePositiveIntPipe) medicationId: number,
+        @Param('doseId', ParsePositiveIntPipe) doseId: number,
+        @Body() dto: UpdateDoseDto,
+    ) {
+        return this.service.updateDose(medicationId, doseId, dto);
     }
 
     /// Endpointovi za apoteke V

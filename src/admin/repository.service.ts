@@ -5,6 +5,7 @@ import { UpdateMedicationDto } from './dto/update-medication.dto';
 import { CreateIngredientDto } from './dto/create-ingredient.dto';
 import { LinkIngredientDto } from './dto/link-ingredient.dto';
 import { CreateDoseDto } from './dto/create-dose.dto';
+import { UpdateDoseDto } from './dto/update-dose.dto';
 import { CreatePharmacyDto } from './dto/create-pharmacy.dto';
 import { UpdatePharmacyDto } from './dto/update-pharmacy.dto';
 import { CreateWorkingHoursDto } from './dto/create-workingHours.dto';
@@ -249,6 +250,25 @@ export class RepositoryService {
         }
     }
 
+    async updateDose(medicationId: number, doseId: number, dto: UpdateDoseDto) {
+        try {
+            const existing = await this.db.query<{ id: number }[]>(
+                'SELECT id FROM Doses WHERE id = ? AND medication_id = ? AND isActive = 1',
+                [doseId, medicationId]
+            );
+            if (existing.length === 0)
+                throw new NotFoundException(`Doza sa ID-em ${doseId} ne postoji.`);
+            await this.db.query(
+                'UPDATE Doses SET is_refundable = ? WHERE id = ?',
+                [dto.is_refundable ? 1 : 0, doseId]
+            );
+            return { success: true };
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new InternalServerErrorException('Došlo je do greške pri ažuriranju doze.');
+        }
+    }
+
     async createPharmacy(dto: CreatePharmacyDto) {
         try {
             const existing = await this.db.query<any[]>(
@@ -280,9 +300,10 @@ export class RepositoryService {
                 address = COALESCE(?, address),
                 latitude = COALESCE(?, latitude),
                 longitude = COALESCE(?, longitude),
-                city_id = COALESCE(?, city_id)
+                city_id = COALESCE(?, city_id),
+                is_state = COALESCE(?, is_state)
                 WHERE id = ?`,
-                [dto.name ?? null, dto.address ?? null, dto.latitude ?? null, dto.longitude ?? null, dto.city_id ?? null, id]
+                [dto.name ?? null, dto.address ?? null, dto.latitude ?? null, dto.longitude ?? null, dto.city_id ?? null, dto.is_state !== undefined ? (dto.is_state ? 1 : 0) : null, id]
             );
 
             if (result.affectedRows === 0)
@@ -614,13 +635,13 @@ export class RepositoryService {
     }
 
     async getPharmacyAdminById(id: number) {
-        const rows = await this.db.query<{ id: number; name: string; address: string; latitude: number; longitude: number; city_id: number; img_url: string | null }[]>(
-            'SELECT id, name, address, latitude, longitude, city_id, img_url FROM Pharmacy WHERE id = ? AND isActive = 1 LIMIT 1',
+        const rows = await this.db.query<{ id: number; name: string; address: string; latitude: number; longitude: number; city_id: number; img_url: string | null; is_state: boolean }[]>(
+            'SELECT id, name, address, latitude, longitude, city_id, img_url, is_state FROM Pharmacy WHERE id = ? AND isActive = 1 LIMIT 1',
             [id]
         );
         if (rows.length === 0)
             throw new NotFoundException(`Apoteka sa ID-em ${id} ne postoji.`);
-        return { success: true, data: rows[0] };
+        return { success: true, data: { ...rows[0], is_state: Boolean(rows[0].is_state) } };
     }
 
     async getPharmacyWorkingHoursAdmin(pharmacyId: number) {

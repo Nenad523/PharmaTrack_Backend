@@ -5,6 +5,7 @@ import { UpdateMedicationDto } from './dto/update-medication.dto';
 import { CreateIngredientDto } from './dto/create-ingredient.dto';
 import { LinkIngredientDto } from './dto/link-ingredient.dto';
 import { CreateDoseDto } from './dto/create-dose.dto';
+import { UpdateDoseDto } from './dto/update-dose.dto';
 import { CreatePharmacyDto } from './dto/create-pharmacy.dto';
 import { UpdatePharmacyDto } from './dto/update-pharmacy.dto';
 import { CreateWorkingHoursDto } from './dto/create-workingHours.dto';
@@ -57,6 +58,10 @@ export class AdminService {
 
     async deleteDose(medicationId: number, doseId: number) {
         return this.repo.deleteDose(medicationId, doseId);
+    }
+
+    async updateDose(medicationId: number, doseId: number, dto: UpdateDoseDto) {
+        return this.repo.updateDose(medicationId, doseId, dto);
     }
 
     async createPharmacy(dto: CreatePharmacyDto) {

@@ -4,6 +4,7 @@ export type SearchDose = {
     doseId: number;
     strength: string;
     lastUpdated?: string;
+    is_refundable: boolean;
 };
 
 export type MainSearch = {
@@ -14,6 +15,7 @@ export type MainSearch = {
     latitude: number;
     longitude: number;
     isActive: boolean;
+    is_state: boolean;
     distance?: number | null;
     isOpenNow: boolean;
     isOnDuty: boolean;
@@ -30,6 +32,7 @@ export type PharmacySearchRow = {
     latitude: number;
     longitude: number;
     isActive: boolean;
+    is_state: boolean;
     distance?: number | null;
 };
 
@@ -50,6 +53,7 @@ export type PharmacyDetailRow = {
     latitude: number;
     longitude: number;
     isActive: boolean;
+    is_state: boolean;
     img_url: string | null;
     dutyStart: string | null;
     dutyEnd: string | null;
@@ -60,4 +64,5 @@ export type PharmacyDoseRow = {
     doseId: number;
     strength: string;
     lastUpdated?: string;
+    is_refundable: boolean;
 };
