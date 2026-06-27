@@ -41,7 +41,7 @@ export class AuthenticationController {
         return req.user;
     }
 
-    @ApiOperation({ 'summary' : 'Dohvatanje podataka o trenutno prijavljenom korisniku.'})
+    @ApiOperation({ 'summary' : 'Dohvatanje podataka o trenutno prijavljenom korisniku'})
     
     @Get('/me')
     getMe(@Request() req){
