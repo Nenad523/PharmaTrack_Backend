@@ -3,10 +3,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable prettier/prettier */
 
-import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus} from "@nestjs/common";
+import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus, Logger} from "@nestjs/common";
 
-@Catch() // ← hvata SVE greške
+@Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
+  private logger = new Logger('GlobalExceptionFilter');
 
   catch(exception: unknown, host: ArgumentsHost) {
     // host je kontekst trenutnog zahtjeva
@@ -22,6 +23,12 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const status = exception instanceof HttpException
       ? exception.getStatus()  // uzmi status iz HttpException (404, 400...)
       : HttpStatus.INTERNAL_SERVER_ERROR  // ili stavi 500
+
+    if (!(exception instanceof HttpException)) {
+      this.logger.error(
+        exception instanceof Error ? exception.stack : String(exception)
+      );
+    }
 
     let message: string | string[] = 'Došlo je do greške. Pokušajte ponovo.'
 
