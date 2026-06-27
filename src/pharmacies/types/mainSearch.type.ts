@@ -50,6 +50,7 @@ export type PharmacyDetailRow = {
     latitude: number;
     longitude: number;
     isActive: boolean;
+    img_url: string | null;
     dutyStart: string | null;
     dutyEnd: string | null;
 };

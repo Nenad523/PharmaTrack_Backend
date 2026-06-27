@@ -518,6 +518,7 @@ export class PharmaciesRepository {
                     P.latitude,
                     P.longitude,
                     P.isActive,
+                    P.img_url,
                     DS.start_datetime AS dutyStart,
                     DS.end_datetime AS dutyEnd
                 FROM Pharmacy P
@@ -563,6 +564,7 @@ export class PharmaciesRepository {
                     latitude: pharmacy.latitude,
                     longitude: pharmacy.longitude,
                     isActive: pharmacy.isActive,
+                    img_url: pharmacy.img_url ?? null,
                     isOnDuty: pharmacy.dutyStart !== null,
                     phones: phones.map(p => p.number),
                     workingHours,
