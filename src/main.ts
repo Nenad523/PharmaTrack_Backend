@@ -47,6 +47,18 @@ function isDevelopmentOrigin(origin: string): boolean {
   return isLocalOrigin(origin) || isPrivateNetworkOrigin(origin);
 }
 
+function isVercelPreviewOrigin(origin: string): boolean {
+  try {
+    const url = new URL(origin);
+    return (
+      url.protocol === 'https:' &&
+      /^pharma-track-frontend(-[a-z0-9-]+)?\.vercel\.app$/.test(url.hostname)
+    );
+  } catch {
+    return false;
+  }
+}
+
 function parseBooleanEnv(value: string | undefined, fallback: boolean): boolean {
   if (value === undefined) {
     return fallback;
@@ -117,6 +129,7 @@ app.use((req, res, next) => {
       if (
         !origin ||
         allowedOrigins.includes(origin) ||
+        isVercelPreviewOrigin(origin) ||
         (!isProduction && isDevelopmentOrigin(origin))
       ) {
         callback(null, true);
