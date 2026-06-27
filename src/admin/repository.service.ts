@@ -614,8 +614,8 @@ export class RepositoryService {
     }
 
     async getPharmacyAdminById(id: number) {
-        const rows = await this.db.query<{ id: number; name: string; address: string; latitude: number; longitude: number; city_id: number }[]>(
-            'SELECT id, name, address, latitude, longitude, city_id FROM Pharmacy WHERE id = ? AND isActive = 1 LIMIT 1',
+        const rows = await this.db.query<{ id: number; name: string; address: string; latitude: number; longitude: number; city_id: number; img_url: string | null }[]>(
+            'SELECT id, name, address, latitude, longitude, city_id, img_url FROM Pharmacy WHERE id = ? AND isActive = 1 LIMIT 1',
             [id]
         );
         if (rows.length === 0)

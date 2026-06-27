@@ -74,4 +74,52 @@ export class CloudinaryController {
       imageUrl: url
     }
   }
+
+  @ApiOperation({ summary: 'Upload slike apoteke na Cloudinary' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary' },
+        pharmacyId: { type: 'string', example: '1' }
+      }
+    }
+  })
+  @Post('/pharmacy-image')
+  @UseInterceptors(FileInterceptor('file', {
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: (req, file, callback) => {
+      if (!file.mimetype.match(/\/(jpg|jpeg|png|webp)$/)) {
+        callback(new BadRequestException('Samo JPG, PNG i WebP fajlovi su dozvoljeni'), false);
+        return;
+      }
+      callback(null, true);
+    }
+  }))
+  async uploadPharmacyImage(
+    @UploadedFile() file: Express.Multer.File,
+    @Body('pharmacyId') pharmacyId: string
+  ) {
+    if (!file) throw new BadRequestException('Fajl nije proslijeđen');
+    if (!pharmacyId) throw new BadRequestException('ID apoteke je obavezan');
+
+    const id = parseInt(pharmacyId, 10);
+    if (isNaN(id)) throw new BadRequestException('Neispravan ID apoteke');
+
+    const pharmacies = await this.db.query<any[]>(
+      'SELECT id FROM Pharmacy WHERE id = ? AND isActive = 1',
+      [id]
+    );
+    if (pharmacies.length === 0) throw new BadRequestException(`Apoteka sa ID-em ${id} nije pronađena`);
+
+    const url = await this.cloudinaryService.uploadImage(file);
+
+    await this.db.query(
+      'UPDATE Pharmacy SET img_url = ? WHERE id = ?',
+      [url, id]
+    );
+
+    return { pharmacyId: id, imageUrl: url };
+  }
 }
